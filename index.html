@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squares - Exercice de Discipline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'MS Sans Serif', Arial, sans-serif;
+            background: #008080;
+            padding: 20px;
+            color: #000;
+        }
+
+        .window {
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #ffffff #000000 #000000 #ffffff;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .title-bar {
+            background: linear-gradient(to right, #000080, #1084d0);
+            color: white;
+            padding: 3px 5px;
+            font-weight: bold;
+        }
+
+        .title-text {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .content {
+            padding: 20px;
+            background: #c0c0c0;
+        }
+
+
+
+        .tab-container {
+            margin-bottom: 15px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 2px;
+            margin-bottom: -2px;
+        }
+
+        .tab {
+            padding: 5px 15px;
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #ffffff #000000 transparent #ffffff;
+            cursor: pointer;
+            position: relative;
+            top: 2px;
+        }
+
+        .tab.active {
+            background: #c0c0c0;
+            border-bottom-color: #c0c0c0;
+            z-index: 1;
+        }
+
+        .tab-content {
+            border: 2px solid;
+            border-color: #808080 #ffffff #ffffff #808080;
+            padding: 15px;
+            background: #c0c0c0;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .button {
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #ffffff #000000 #000000 #ffffff;
+            padding: 8px 20px;
+            cursor: pointer;
+            font-family: 'MS Sans Serif', Arial;
+            font-size: 11px;
+            margin: 5px;
+        }
+
+        .button:active {
+            border-color: #000000 #ffffff #ffffff #000000;
+        }
+
+        .button:disabled {
+            color: #808080;
+            cursor: default;
+        }
+
+        h2 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            padding: 3px;
+            background: #000080;
+            color: white;
+        }
+
+        h3 {
+            font-size: 12px;
+            margin: 10px 0 5px 0;
+        }
+
+        ul {
+            margin-left: 20px;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .grid-container {
+            display: inline-block;
+            background: white;
+            border: 2px solid;
+            border-color: #808080 #ffffff #ffffff #808080;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        .grid {
+            display: grid;
+            gap: 0;
+            background: white;
+            border: 1px solid #000;
+        }
+
+        .cell {
+            width: 25px;
+            height: 25px;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+        }
+
+        .cell.selected {
+            transform: scale(3);
+            z-index: 100;
+            background: white;
+            border: 3px solid #000080;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .drawing-canvas {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 4px solid #000080;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            z-index: 1000;
+            padding: 10px;
+        }
+
+        .drawing-canvas.active {
+            display: block;
+        }
+
+        .canvas-wrapper {
+            background: white;
+            border: 2px solid #000;
+        }
+
+        canvas {
+            display: block;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        .canvas-controls {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .cell.center-line {
+            border-right: 2px solid #ff0000;
+        }
+
+        .cell.error {
+            background: #ffcccc;
+        }
+
+        .cell.touching {
+            background: #ffeeee;
+        }
+
+        .controls {
+            margin: 15px 0;
+            padding: 10px;
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #808080 #ffffff #ffffff #808080;
+        }
+
+        .status-bar {
+            background: #c0c0c0;
+            border-top: 2px solid;
+            border-color: #ffffff #808080 #808080 #ffffff;
+            padding: 3px 5px;
+            font-size: 11px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .status-section {
+            border: 1px solid;
+            border-color: #808080 #ffffff #ffffff #808080;
+            padding: 2px 5px;
+        }
+
+        input[type="text"] {
+            border: 2px solid;
+            border-color: #808080 #ffffff #ffffff #808080;
+            padding: 3px;
+            font-family: 'MS Sans Serif', Arial;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .window {
+                border: none;
+                box-shadow: none;
+            }
+            .title-bar, .menu-bar, .tabs, .controls, .status-bar, .button {
+                display: none !important;
+            }
+            .tab-content {
+                border: none;
+                padding: 0;
+            }
+            .grid {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="window">
+        <div class="title-bar">
+            <div class="title-text">
+                <span>📋</span>
+                <span>Squares - Exercice de Discipline</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="tab-container">
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('rules')">📖 Règles</div>
+                    <div class="tab" onclick="switchTab('practice')">✏️ Pratiquer</div>
+                    <div class="tab" onclick="switchTab('print')">🖨️ Imprimer</div>
+                </div>
+
+                <div id="rules" class="tab-content active">
+                    <h2>📋 Principe de l'exercice "Squares"</h2>
+                    <p style="font-size: 11px; margin: 10px 0;">
+                        Le "Square" est un exercice de concentration, patience et discipline consistant à remplir une feuille quadrillée avec une lettre ou un chiffre par case, sans jamais toucher les lignes.
+                    </p>
+
+                    <h3>🎯 Objectif</h3>
+                    <ul>
+                        <li>Développer la patience et la concentration</li>
+                        <li>Maintenir une écriture régulière et soignée</li>
+                        <li>Exercice de contrôle de soi et d'obéissance</li>
+                        <li>Peut être utilisé comme punition ou exercice de discipline</li>
+                    </ul>
+
+                    <h3>📏 Règles strictes</h3>
+                    <ul>
+                        <li><strong>Support :</strong> Feuille A4 quadrillée (carrés < 8mm)</li>
+                        <li><strong>Écriture :</strong> Lettres CAPITALES uniquement</li>
+                        <li><strong>Placement :</strong> Une lettre/chiffre par case, centrée</li>
+                        <li><strong>Interdiction absolue :</strong> Ne JAMAIS toucher les lignes</li>
+                        <li><strong>Ligne centrale :</strong> Une ligne verticale colorée peut séparer la feuille en deux</li>
+                        <li><strong>Tolérance :</strong> ZÉRO faute acceptée</li>
+                        <li><strong>En cas d'erreur :</strong> Barrer et recommencer la page entière</li>
+                    </ul>
+
+                    <h3>⏱️ Durée estimée</h3>
+                    <ul>
+                        <li>Environ 1 heure par feuille A4 complète</li>
+                        <li>Nécessite une attention soutenue sans relâchement</li>
+                    </ul>
+
+                    <h3>⚠️ Points d'attention</h3>
+                    <ul>
+                        <li>Vérifier chaque lettre avant de passer à la suivante</li>
+                        <li>Maintenir une taille et un style constants</li>
+                        <li>Rester calme et concentré du début à la fin</li>
+                        <li>Accepter de recommencer en cas d'erreur</li>
+                    </ul>
+                </div>
+
+                <div id="practice" class="tab-content">
+                    <h2>✏️ Mode Pratique (Digital)</h2>
+                    <p style="font-size: 11px; margin: 10px 0;">
+                        Cliquez sur une case pour l'agrandir et dessinez votre lettre avec la souris ou le doigt. Le système vérifie si vous touchez les bords.
+                    </p>
+
+                    <div class="controls">
+                        <label>Texte à écrire: </label>
+                        <input type="text" id="textInput" value="JE SERAI PLUS ATTENTIF" style="width: 300px;">
+                        <button class="button" onclick="startExercise()">Commencer</button>
+                        <button class="button" onclick="resetGrid()">Réinitialiser</button>
+                    </div>
+
+                    <div class="grid-container">
+                        <div id="practiceGrid" class="grid"></div>
+                    </div>
+
+                    <div style="margin-top: 10px; font-size: 11px;">
+                        <strong>Instructions:</strong> Cliquez sur une case pour l'agrandir. Dessinez votre lettre capitale en restant dans les limites (zone blanche). Validez ou effacez si besoin.
+                    </div>
+                </div>
+
+                <div class="drawing-canvas" id="drawingCanvas">
+                    <div style="background: #000080; color: white; padding: 5px; margin-bottom: 10px;">
+                        <strong>Dessinez la lettre: <span id="expectedLetter"></span></strong>
+                    </div>
+                    <div class="canvas-wrapper">
+                        <canvas id="drawCanvas" width="300" height="300"></canvas>
+                    </div>
+                    <div class="canvas-controls">
+                        <button class="button" onclick="clearCanvas()">Effacer</button>
+                        <button class="button" onclick="validateDrawing()">Valider</button>
+                        <button class="button" onclick="cancelDrawing()">Annuler</button>
+                    </div>
+                </div>
+
+                <div id="print" class="tab-content">
+                    <h2>🖨️ Imprimer une feuille vierge</h2>
+                    <p style="font-size: 11px; margin: 10px 0;">
+                        Imprimez cette grille normalisée pour réaliser l'exercice à la main.
+                    </p>
+
+                    <div class="controls">
+                        <label>Taille de la grille (carrés de 7mm): </label>
+                        <select id="gridSize">
+                            <option value="small">Petite (15x20)</option>
+                            <option value="medium" selected>Moyenne (20x27)</option>
+                            <option value="large">Grande (25x35)</option>
+                        </select>
+                        <button class="button" onclick="generatePrintGrid()">Générer</button>
+                        <button class="button" onclick="window.print()">Imprimer</button>
+                    </div>
+
+                    <div class="grid-container">
+                        <div id="printGrid" class="grid"></div>
+                    </div>
+
+                    <div style="margin-top: 10px; font-size: 11px;">
+                        <strong>Note:</strong> La ligne rouge centrale est optionnelle. Vous pouvez la tracer au marqueur après impression.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-section">Prêt</div>
+            <div class="status-section" id="statusText">Aucun exercice en cours</div>
+            <div class="status-section" id="errorCount">Erreurs: 0</div>
+        </div>
+    </div>
+
+    <script>
+        let currentCell = null;
+        let exerciseText = '';
+        let currentIndex = 0;
+        let errorCount = 0;
+        let canvas = null;
+        let ctx = null;
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let drawings = [];
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function createGrid(containerId, rows, cols, interactive = false) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            
+            const centerCol = Math.floor(cols / 2);
+            
+            for (let i = 0; i < rows * cols; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                
+                if (i % cols === centerCol) {
+                    cell.classList.add('center-line');
+                }
+                
+                if (interactive) {
+                    cell.dataset.index = i;
+                    cell.addEventListener('click', () => openDrawingCanvas(cell, i));
+                }
+                
+                container.appendChild(cell);
+            }
+        }
+
+        function openDrawingCanvas(cell, index) {
+            if (!exerciseText) {
+                alert('Veuillez d\'abord cliquer sur "Commencer"');
+                return;
+            }
+            
+            if (index !== currentIndex) {
+                alert('Vous devez remplir les cases dans l\'ordre !');
+                return;
+            }
+            
+            currentCell = cell;
+            const expectedChar = exerciseText[currentIndex];
+            
+            if (expectedChar === ' ') {
+                currentIndex++;
+                updateStatus();
+                return;
+            }
+            
+            document.getElementById('expectedLetter').textContent = expectedChar;
+            document.getElementById('drawingCanvas').classList.add('active');
+            
+            if (!canvas) {
+                canvas = document.getElementById('drawCanvas');
+                ctx = canvas.getContext('2d');
+                setupCanvas();
+            }
+            
+            clearCanvas();
+            drawBorders();
+        }
+
+        function setupCanvas() {
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            canvas.addEventListener('touchstart', handleTouch);
+            canvas.addEventListener('touchmove', handleTouch);
+            canvas.addEventListener('touchend', stopDrawing);
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            lastX = e.clientX - rect.left;
+            lastY = e.clientY - rect.top;
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            
+            lastX = x;
+            lastY = y;
+        }
+
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            
+            if (e.type === 'touchstart') {
+                isDrawing = true;
+                lastX = x;
+                lastY = y;
+            } else if (e.type === 'touchmove' && isDrawing) {
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                
+                lastX = x;
+                lastY = y;
+            }
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function drawBorders() {
+            const margin = 20;
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(margin, margin, canvas.width - 2*margin, canvas.height - 2*margin);
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            drawBorders();
+        }
+
+        function checkBorderTouch() {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            const margin = 20;
+            
+            // Check top and bottom borders
+            for (let x = margin; x < canvas.width - margin; x++) {
+                // Top border
+                for (let y = margin - 5; y < margin + 5; y++) {
+                    const index = (y * canvas.width + x) * 4;
+                    if (data[index] < 200) return true; // Found dark pixel
+                }
+                // Bottom border
+                for (let y = canvas.height - margin - 5; y < canvas.height - margin + 5; y++) {
+                    const index = (y * canvas.width + x) * 4;
+                    if (data[index] < 200) return true;
+                }
+            }
+            
+            // Check left and right borders
+            for (let y = margin; y < canvas.height - margin; y++) {
+                // Left border
+                for (let x = margin - 5; x < margin + 5; x++) {
+                    const index = (y * canvas.width + x) * 4;
+                    if (data[index] < 200) return true;
+                }
+                // Right border
+                for (let x = canvas.width - margin - 5; x < canvas.width - margin + 5; x++) {
+                    const index = (y * canvas.width + x) * 4;
+                    if (data[index] < 200) return true;
+                }
+            }
+            
+            return false;
+        }
+
+        function validateDrawing() {
+            const touching = checkBorderTouch();
+            
+            if (touching) {
+                currentCell.classList.add('touching');
+                errorCount++;
+                alert('⚠️ ERREUR: Votre lettre touche les bords!\n\nVous devez recommencer la page entière.');
+                setTimeout(() => {
+                    resetGrid();
+                    cancelDrawing();
+                }, 500);
+                return;
+            }
+            
+            // Save drawing as mini representation
+            const miniCanvas = document.createElement('canvas');
+            miniCanvas.width = 25;
+            miniCanvas.height = 25;
+            const miniCtx = miniCanvas.getContext('2d');
+            miniCtx.drawImage(canvas, 20, 20, 260, 260, 0, 0, 25, 25);
+            
+            currentCell.style.backgroundImage = `url(${miniCanvas.toDataURL()})`;
+            currentCell.style.backgroundSize = 'contain';
+            currentCell.style.backgroundPosition = 'center';
+            currentCell.style.backgroundRepeat = 'no-repeat';
+            currentCell.textContent = '';
+            
+            currentIndex++;
+            updateStatus();
+            cancelDrawing();
+            
+            if (currentIndex >= exerciseText.replace(/ /g, '').length) {
+                alert('✅ Félicitations! Exercice terminé sans erreur!');
+            }
+        }
+
+        function cancelDrawing() {
+            document.getElementById('drawingCanvas').classList.remove('active');
+        }
+
+        function startExercise() {
+            exerciseText = document.getElementById('textInput').value.toUpperCase().replace(/[^A-Z0-9\s]/g, '');
+            currentIndex = 0;
+            errorCount = 0;
+            updateStatus();
+            createGrid('practiceGrid', 20, 27, true);
+            document.getElementById('statusText').textContent = 'Exercice en cours - Cliquez sur les cases dans l\'ordre';
+        }
+
+        function resetGrid() {
+            createGrid('practiceGrid', 20, 27, true);
+            currentIndex = 0;
+            errorCount = 0;
+            currentCell = null;
+            updateStatus();
+        }
+
+        function updateStatus() {
+            document.getElementById('errorCount').textContent = `Erreurs: ${errorCount}`;
+            if (exerciseText) {
+                const totalChars = exerciseText.replace(/ /g, '').length;
+                const progress = Math.min(100, Math.floor((currentIndex / totalChars) * 100));
+                document.getElementById('statusText').textContent = `Progression: ${progress}% (${currentIndex}/${totalChars})`;
+            }
+        }
+
+        function generatePrintGrid() {
+            const size = document.getElementById('gridSize').value;
+            let rows, cols;
+            
+            switch(size) {
+                case 'small': rows = 15; cols = 20; break;
+                case 'large': rows = 25; cols = 35; break;
+                default: rows = 20; cols = 27;
+            }
+            
+            createGrid('printGrid', rows, cols, false);
+        }
+
+        // Initialize
+        createGrid('practiceGrid', 20, 27, true);
+        generatePrintGrid();
+    </script>
+</body>
+</html>
