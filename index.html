@@ -45,8 +45,6 @@
             background: #c0c0c0;
         }
 
-
-
         .tab-container {
             margin-bottom: 15px;
         }
@@ -131,6 +129,8 @@
             border-color: #808080 #ffffff #ffffff #808080;
             padding: 10px;
             margin: 10px 0;
+            max-width: 100%;
+            overflow-x: auto;
         }
 
         .grid {
@@ -155,12 +155,12 @@
             transition: all 0.2s;
         }
 
-        .cell.selected {
-            transform: scale(3);
-            z-index: 100;
-            background: white;
-            border: 3px solid #000080;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        .cell.next {
+            background: #ffffcc;
+        }
+
+        .cell.filled {
+            background: #e0ffe0;
         }
 
         .drawing-canvas {
@@ -178,6 +178,84 @@
 
         .drawing-canvas.active {
             display: block;
+        }
+
+        .completion-dialog {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #c0c0c0;
+            border: 3px solid;
+            border-color: #ffffff #000000 #000000 #ffffff;
+            box-shadow: 0 0 30px rgba(0,0,0,0.7);
+            z-index: 2000;
+            padding: 20px;
+            min-width: 400px;
+            max-width: 90%;
+        }
+
+        .completion-dialog.active {
+            display: block;
+        }
+
+        .dialog-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1999;
+        }
+
+        .dialog-overlay.active {
+            display: block;
+        }
+
+        .dialog-title {
+            background: linear-gradient(to right, #000080, #1084d0);
+            color: white;
+            padding: 5px 10px;
+            margin: -20px -20px 15px -20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .dialog-content {
+            text-align: center;
+        }
+
+        .completion-icon {
+            font-size: 48px;
+            margin: 10px 0;
+        }
+
+        .share-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .share-button {
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #ffffff #000000 #000000 #ffffff;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-family: 'MS Sans Serif', Arial;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .share-button:active {
+            border-color: #000000 #ffffff #ffffff #000000;
         }
 
         .canvas-wrapper {
@@ -248,7 +326,7 @@
                 border: none;
                 box-shadow: none;
             }
-            .title-bar, .menu-bar, .tabs, .controls, .status-bar, .button {
+            .title-bar, .tabs, .controls, .status-bar, .button {
                 display: none !important;
             }
             .tab-content {
@@ -300,6 +378,7 @@
                         <li><strong>Interdiction absolue :</strong> Ne JAMAIS toucher les lignes</li>
                         <li><strong>Ligne centrale :</strong> Une ligne verticale colorée peut séparer la feuille en deux</li>
                         <li><strong>Tolérance :</strong> ZÉRO faute acceptée</li>
+                        <li><strong>Remplissage :</strong> TOUTE la page doit être remplie (pas d'espaces)</li>
                         <li><strong>En cas d'erreur :</strong> Barrer et recommencer la page entière</li>
                     </ul>
 
@@ -315,13 +394,14 @@
                         <li>Maintenir une taille et un style constants</li>
                         <li>Rester calme et concentré du début à la fin</li>
                         <li>Accepter de recommencer en cas d'erreur</li>
+                        <li>Le texte se répète jusqu'à remplir toute la page</li>
                     </ul>
                 </div>
 
                 <div id="practice" class="tab-content">
                     <h2>✏️ Mode Pratique (Digital)</h2>
                     <p style="font-size: 11px; margin: 10px 0;">
-                        Cliquez sur une case pour l'agrandir et dessinez votre lettre avec la souris ou le doigt. Le système vérifie si vous touchez les bords.
+                        Cliquez sur une case pour l'agrandir et dessinez votre lettre avec la souris ou le doigt. Vous devez remplir TOUTE la page. Le texte se répète automatiquement jusqu'à la fin.
                     </p>
 
                     <div class="controls">
@@ -336,7 +416,7 @@
                     </div>
 
                     <div style="margin-top: 10px; font-size: 11px;">
-                        <strong>Instructions:</strong> Cliquez sur une case pour l'agrandir. Dessinez votre lettre capitale en restant dans les limites (zone blanche). Validez ou effacez si besoin.
+                        <strong>Instructions:</strong> Cliquez sur la case jaune pour l'agrandir. Dessinez votre lettre capitale en restant dans les limites (bordure rouge). Validez ou effacez si besoin. Le texte se répète automatiquement jusqu'à ce que toute la page soit remplie.
                     </div>
                 </div>
 
@@ -351,6 +431,54 @@
                         <button class="button" onclick="clearCanvas()">Effacer</button>
                         <button class="button" onclick="validateDrawing()">Valider</button>
                         <button class="button" onclick="cancelDrawing()">Annuler</button>
+                    </div>
+                </div>
+
+                <div class="dialog-overlay" id="dialogOverlay"></div>
+                <div class="completion-dialog" id="completionDialog">
+                    <div class="dialog-title">✅ Exercice Terminé !</div>
+                    <div class="dialog-content">
+                        <div class="completion-icon">🏆</div>
+                        <h3 style="margin: 10px 0;">Félicitations !</h3>
+                        <p style="font-size: 12px; margin: 10px 0;">
+                            Vous avez complété l'exercice "Squares" avec succès !
+                        </p>
+                        <div style="background: #fff; border: 2px solid #000; padding: 10px; margin: 15px 0; text-align: left;">
+                            <strong>Résultats :</strong><br>
+                            • Temps: <span id="completionTime">-</span><br>
+                            • Erreurs: <span id="completionErrors">0</span><br>
+                            • Cases remplies: 540
+                        </div>
+                        
+                        <div style="margin: 15px 0;">
+                            <button class="button" onclick="downloadCertificate()" style="display: block; width: 90%; margin: 5px auto;">
+                                💾 Télécharger le certificat
+                            </button>
+                        </div>
+                        
+                        <div style="border-top: 2px solid #808080; padding-top: 15px; margin-top: 15px;">
+                            <strong style="font-size: 11px;">Partager sur les réseaux sociaux:</strong>
+                            <div class="share-buttons">
+                                <button class="share-button" onclick="shareCertificate('Twitter')">
+                                    🐦 Twitter
+                                </button>
+                                <button class="share-button" onclick="shareCertificate('Facebook')">
+                                    📘 Facebook
+                                </button>
+                                <button class="share-button" onclick="shareCertificate('Instagram')">
+                                    📷 Instagram
+                                </button>
+                                <button class="share-button" onclick="shareCertificate('WhatsApp')">
+                                    💬 WhatsApp
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 15px;">
+                            <button class="button" onclick="closeCompletionDialog()">
+                                Fermer
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -399,7 +527,9 @@
         let isDrawing = false;
         let lastX = 0;
         let lastY = 0;
-        let drawings = [];
+        let totalCells = 0;
+        const GRID_ROWS = 20;
+        const GRID_COLS = 27;
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -415,8 +545,9 @@
             container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
             
             const centerCol = Math.floor(cols / 2);
+            totalCells = rows * cols;
             
-            for (let i = 0; i < rows * cols; i++) {
+            for (let i = 0; i < totalCells; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
                 
@@ -426,6 +557,9 @@
                 
                 if (interactive) {
                     cell.dataset.index = i;
+                    if (i === 0) {
+                        cell.classList.add('next');
+                    }
                     cell.addEventListener('click', () => openDrawingCanvas(cell, i));
                 }
                 
@@ -445,13 +579,11 @@
             }
             
             currentCell = cell;
-            const expectedChar = exerciseText[currentIndex];
             
-            if (expectedChar === ' ') {
-                currentIndex++;
-                updateStatus();
-                return;
-            }
+            // Remove spaces from text for continuous filling
+            const cleanText = exerciseText.replace(/\s+/g, '');
+            const charIndex = currentIndex % cleanText.length;
+            const expectedChar = cleanText[charIndex];
             
             document.getElementById('expectedLetter').textContent = expectedChar;
             document.getElementById('drawingCanvas').classList.add('active');
@@ -554,28 +686,22 @@
             const data = imageData.data;
             const margin = 20;
             
-            // Check top and bottom borders
             for (let x = margin; x < canvas.width - margin; x++) {
-                // Top border
                 for (let y = margin - 5; y < margin + 5; y++) {
                     const index = (y * canvas.width + x) * 4;
-                    if (data[index] < 200) return true; // Found dark pixel
+                    if (data[index] < 200) return true;
                 }
-                // Bottom border
                 for (let y = canvas.height - margin - 5; y < canvas.height - margin + 5; y++) {
                     const index = (y * canvas.width + x) * 4;
                     if (data[index] < 200) return true;
                 }
             }
             
-            // Check left and right borders
             for (let y = margin; y < canvas.height - margin; y++) {
-                // Left border
                 for (let x = margin - 5; x < margin + 5; x++) {
                     const index = (y * canvas.width + x) * 4;
                     if (data[index] < 200) return true;
                 }
-                // Right border
                 for (let x = canvas.width - margin - 5; x < canvas.width - margin + 5; x++) {
                     const index = (y * canvas.width + x) * 4;
                     if (data[index] < 200) return true;
@@ -599,7 +725,24 @@
                 return;
             }
             
-            // Save drawing as mini representation
+            // Character recognition
+            const cleanText = exerciseText.replace(/\s+/g, '');
+            const charIndex = currentIndex % cleanText.length;
+            const expectedChar = cleanText[charIndex];
+            
+            const isCorrectChar = recognizeCharacter(expectedChar);
+            
+            if (!isCorrectChar) {
+                currentCell.classList.add('error');
+                errorCount++;
+                alert(`⚠️ ERREUR: Ce n'est pas la lettre "${expectedChar}"!\n\nVous devez recommencer la page entière.`);
+                setTimeout(() => {
+                    resetGrid();
+                    cancelDrawing();
+                }, 500);
+                return;
+            }
+            
             const miniCanvas = document.createElement('canvas');
             miniCanvas.width = 25;
             miniCanvas.height = 25;
@@ -611,14 +754,312 @@
             currentCell.style.backgroundPosition = 'center';
             currentCell.style.backgroundRepeat = 'no-repeat';
             currentCell.textContent = '';
+            currentCell.classList.remove('next');
+            currentCell.classList.add('filled');
             
             currentIndex++;
+            
+            // Highlight next cell
+            if (currentIndex < totalCells) {
+                const nextCell = document.querySelector(`[data-index="${currentIndex}"]`);
+                if (nextCell) {
+                    nextCell.classList.add('next');
+                }
+            }
+            
             updateStatus();
             cancelDrawing();
             
-            if (currentIndex >= exerciseText.replace(/ /g, '').length) {
-                alert('✅ Félicitations! Exercice terminé sans erreur!');
+            if (currentIndex >= totalCells) {
+                showCompletionDialog();
             }
+        }
+
+        function showCompletionDialog() {
+            const dialog = document.getElementById('completionDialog');
+            dialog.classList.add('active');
+            
+            // Update completion info
+            const endTime = new Date();
+            const startTimeStored = window.exerciseStartTime || endTime;
+            const duration = Math.floor((endTime - startTimeStored) / 60000);
+            
+            document.getElementById('completionTime').textContent = duration > 0 ? `${duration} minutes` : 'Moins d\'une minute';
+            document.getElementById('completionErrors').textContent = errorCount;
+        }
+
+        function closeCompletionDialog() {
+            document.getElementById('completionDialog').classList.remove('active');
+        }
+
+        function generateCertificate() {
+            const certCanvas = document.createElement('canvas');
+            certCanvas.width = 800;
+            certCanvas.height = 600;
+            const certCtx = certCanvas.getContext('2d');
+            
+            // Background
+            certCtx.fillStyle = '#f5f5dc';
+            certCtx.fillRect(0, 0, 800, 600);
+            
+            // Border
+            certCtx.strokeStyle = '#8b4513';
+            certCtx.lineWidth = 8;
+            certCtx.strokeRect(20, 20, 760, 560);
+            
+            certCtx.strokeStyle = '#d2691e';
+            certCtx.lineWidth = 2;
+            certCtx.strokeRect(30, 30, 740, 540);
+            
+            // Title
+            certCtx.fillStyle = '#000080';
+            certCtx.font = 'bold 48px serif';
+            certCtx.textAlign = 'center';
+            certCtx.fillText('CERTIFICAT D\'ACCOMPLISSEMENT', 400, 100);
+            
+            // Subtitle
+            certCtx.font = 'italic 24px serif';
+            certCtx.fillStyle = '#333';
+            certCtx.fillText('Exercice de Discipline "Squares"', 400, 150);
+            
+            // Main text
+            certCtx.font = '20px serif';
+            certCtx.fillStyle = '#000';
+            certCtx.fillText('Certifie que l\'exercice a été complété', 400, 220);
+            certCtx.fillText('avec succès le ' + new Date().toLocaleDateString('fr-FR'), 400, 260);
+            
+            // Stats box
+            certCtx.fillStyle = '#fff';
+            certCtx.fillRect(200, 300, 400, 120);
+            certCtx.strokeStyle = '#000080';
+            certCtx.lineWidth = 2;
+            certCtx.strokeRect(200, 300, 400, 120);
+            
+            certCtx.fillStyle = '#000';
+            certCtx.font = 'bold 18px sans-serif';
+            certCtx.textAlign = 'left';
+            certCtx.fillText('Statistiques:', 220, 330);
+            
+            certCtx.font = '16px sans-serif';
+            const endTime = new Date();
+            const startTimeStored = window.exerciseStartTime || endTime;
+            const duration = Math.floor((endTime - startTimeStored) / 60000);
+            
+            certCtx.fillText(`• Temps: ${duration > 0 ? duration + ' minutes' : 'Moins d\'une minute'}`, 220, 360);
+            certCtx.fillText(`• Erreurs: ${errorCount}`, 220, 385);
+            certCtx.fillText(`• Cases remplies: ${totalCells}`, 220, 410);
+            
+            // Mini grid preview (with watermark)
+            const scale = 0.8;
+            const gridPreviewX = 250;
+            const gridPreviewY = 440;
+            
+            certCtx.save();
+            certCtx.translate(gridPreviewX, gridPreviewY);
+            certCtx.scale(scale, scale);
+            
+            const practiceGrid = document.getElementById('practiceGrid');
+            const cells = practiceGrid.querySelectorAll('.cell');
+            const cellSize = 3;
+            const cols = GRID_COLS;
+            
+            cells.forEach((cell, index) => {
+                const x = (index % cols) * cellSize;
+                const y = Math.floor(index / cols) * cellSize;
+                
+                if (cell.style.backgroundImage) {
+                    certCtx.fillStyle = '#ccc';
+                    certCtx.fillRect(x, y, cellSize - 0.5, cellSize - 0.5);
+                }
+            });
+            
+            certCtx.restore();
+            
+            // Watermark - diagonal
+            certCtx.save();
+            certCtx.translate(400, 300);
+            certCtx.rotate(-Math.PI / 6);
+            certCtx.font = 'bold 60px sans-serif';
+            certCtx.fillStyle = 'rgba(0, 0, 128, 0.08)';
+            certCtx.textAlign = 'center';
+            certCtx.fillText('SQUARES DISCIPLINE', 0, 0);
+            certCtx.fillText('NON REPRODUCTIBLE', 0, 70);
+            certCtx.restore();
+            
+            // Footer watermark
+            certCtx.font = '12px sans-serif';
+            certCtx.fillStyle = '#999';
+            certCtx.textAlign = 'center';
+            certCtx.fillText('© Squares Exercise - Document unique et non reproductible', 400, 570);
+            
+            // Timestamp watermark (small, bottom right)
+            certCtx.font = '10px monospace';
+            certCtx.fillStyle = '#ccc';
+            certCtx.textAlign = 'right';
+            const timestamp = Date.now().toString(36).toUpperCase();
+            certCtx.fillText(`ID: ${timestamp}`, 770, 590);
+            
+            return certCanvas;
+        }
+
+        function downloadCertificate() {
+            const canvas = generateCertificate();
+            const link = document.createElement('a');
+            link.download = `squares-certificate-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function shareCertificate(platform) {
+            const canvas = generateCertificate();
+            canvas.toBlob((blob) => {
+                const file = new File([blob], 'squares-certificate.png', { type: 'image/png' });
+                
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        title: 'J\'ai complété l\'exercice Squares!',
+                        text: `J'ai terminé l'exercice de discipline "Squares" avec ${errorCount} erreur(s) !`,
+                        files: [file]
+                    }).catch(err => console.log('Partage annulé', err));
+                } else {
+                    // Fallback: download
+                    downloadCertificate();
+                    alert('Partage non disponible sur ce navigateur.\nLe certificat a été téléchargé.\nVous pouvez le partager manuellement sur ' + platform + '.');
+                }
+            });
+        }
+
+        function recognizeCharacter(expectedChar) {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            // Extract features from the drawing
+            const features = extractFeatures(data, canvas.width, canvas.height);
+            
+            // Character templates - basic pattern matching
+            const templates = getCharacterTemplates();
+            
+            if (!templates[expectedChar]) {
+                // If no template, accept (for special chars)
+                return true;
+            }
+            
+            // Compare with expected character template
+            const similarity = compareFeatures(features, templates[expectedChar]);
+            
+            // Threshold for acceptance (60% similarity)
+            return similarity > 0.6;
+        }
+
+        function extractFeatures(data, width, height) {
+            const margin = 20;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            let topHalf = 0, bottomHalf = 0, leftHalf = 0, rightHalf = 0;
+            let totalPixels = 0;
+            let topMostY = height, bottomMostY = 0, leftMostX = width, rightMostX = 0;
+            
+            // Analyze the drawing
+            for (let y = margin; y < height - margin; y++) {
+                for (let x = margin; x < width - margin; x++) {
+                    const index = (y * width + x) * 4;
+                    if (data[index] < 200) { // Dark pixel
+                        totalPixels++;
+                        
+                        if (y < centerY) topHalf++;
+                        else bottomHalf++;
+                        
+                        if (x < centerX) leftHalf++;
+                        else rightHalf++;
+                        
+                        if (y < topMostY) topMostY = y;
+                        if (y > bottomMostY) bottomMostY = y;
+                        if (x < leftMostX) leftMostX = x;
+                        if (x > rightMostX) rightMostX = x;
+                    }
+                }
+            }
+            
+            if (totalPixels === 0) return null;
+            
+            const heightRatio = (bottomMostY - topMostY) / (height - 2 * margin);
+            const widthRatio = (rightMostX - leftMostX) / (width - 2 * margin);
+            
+            return {
+                topHalf: topHalf / totalPixels,
+                bottomHalf: bottomHalf / totalPixels,
+                leftHalf: leftHalf / totalPixels,
+                rightHalf: rightHalf / totalPixels,
+                heightRatio,
+                widthRatio,
+                aspectRatio: widthRatio / heightRatio
+            };
+        }
+
+        function getCharacterTemplates() {
+            return {
+                'A': { topHalf: 0.3, bottomHalf: 0.7, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.6, aspectRatio: 0.75 },
+                'B': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.7, rightHalf: 0.3, heightRatio: 0.8, widthRatio: 0.5, aspectRatio: 0.63 },
+                'C': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.65, rightHalf: 0.35, heightRatio: 0.7, widthRatio: 0.6, aspectRatio: 0.86 },
+                'D': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.65, rightHalf: 0.35, heightRatio: 0.8, widthRatio: 0.6, aspectRatio: 0.75 },
+                'E': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.7, rightHalf: 0.3, heightRatio: 0.8, widthRatio: 0.5, aspectRatio: 0.63 },
+                'F': { topHalf: 0.6, bottomHalf: 0.4, leftHalf: 0.7, rightHalf: 0.3, heightRatio: 0.8, widthRatio: 0.5, aspectRatio: 0.63 },
+                'G': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.6, rightHalf: 0.4, heightRatio: 0.7, widthRatio: 0.6, aspectRatio: 0.86 },
+                'H': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.6, aspectRatio: 0.75 },
+                'I': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.2, aspectRatio: 0.25 },
+                'J': { topHalf: 0.4, bottomHalf: 0.6, leftHalf: 0.3, rightHalf: 0.7, heightRatio: 0.8, widthRatio: 0.5, aspectRatio: 0.63 },
+                'K': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.6, rightHalf: 0.4, heightRatio: 0.8, widthRatio: 0.6, aspectRatio: 0.75 },
+                'L': { topHalf: 0.4, bottomHalf: 0.6, leftHalf: 0.7, rightHalf: 0.3, heightRatio: 0.8, widthRatio: 0.5, aspectRatio: 0.63 },
+                'M': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.8, aspectRatio: 1.0 },
+                'N': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.7, aspectRatio: 0.88 },
+                'O': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.7, widthRatio: 0.65, aspectRatio: 0.93 },
+                'P': { topHalf: 0.6, bottomHalf: 0.4, leftHalf: 0.7, rightHalf: 0.3, heightRatio: 0.8, widthRatio: 0.5, aspectRatio: 0.63 },
+                'Q': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.65, aspectRatio: 0.87 },
+                'R': { topHalf: 0.55, bottomHalf: 0.45, leftHalf: 0.6, rightHalf: 0.4, heightRatio: 0.8, widthRatio: 0.6, aspectRatio: 0.75 },
+                'S': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.5, aspectRatio: 0.67 },
+                'T': { topHalf: 0.55, bottomHalf: 0.45, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.6, aspectRatio: 0.75 },
+                'U': { topHalf: 0.4, bottomHalf: 0.6, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.6, aspectRatio: 0.8 },
+                'V': { topHalf: 0.45, bottomHalf: 0.55, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.65, aspectRatio: 0.87 },
+                'W': { topHalf: 0.45, bottomHalf: 0.55, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.85, aspectRatio: 1.13 },
+                'X': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.7, aspectRatio: 0.88 },
+                'Y': { topHalf: 0.55, bottomHalf: 0.45, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.65, aspectRatio: 0.81 },
+                'Z': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.7, widthRatio: 0.6, aspectRatio: 0.86 },
+                '0': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.6, aspectRatio: 0.8 },
+                '1': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.4, rightHalf: 0.6, heightRatio: 0.8, widthRatio: 0.3, aspectRatio: 0.38 },
+                '2': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.55, aspectRatio: 0.73 },
+                '3': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.4, rightHalf: 0.6, heightRatio: 0.75, widthRatio: 0.5, aspectRatio: 0.67 },
+                '4': { topHalf: 0.55, bottomHalf: 0.45, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.6, aspectRatio: 0.75 },
+                '5': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.5, aspectRatio: 0.67 },
+                '6': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.55, rightHalf: 0.45, heightRatio: 0.75, widthRatio: 0.55, aspectRatio: 0.73 },
+                '7': { topHalf: 0.6, bottomHalf: 0.4, leftHalf: 0.4, rightHalf: 0.6, heightRatio: 0.8, widthRatio: 0.55, aspectRatio: 0.69 },
+                '8': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.55, aspectRatio: 0.69 },
+                '9': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.45, rightHalf: 0.55, heightRatio: 0.75, widthRatio: 0.55, aspectRatio: 0.73 }
+            };
+        }
+
+        function compareFeatures(features, template) {
+            if (!features) return 0;
+            
+            const weights = {
+                topHalf: 0.15,
+                bottomHalf: 0.15,
+                leftHalf: 0.15,
+                rightHalf: 0.15,
+                heightRatio: 0.15,
+                widthRatio: 0.15,
+                aspectRatio: 0.1
+            };
+            
+            let similarity = 0;
+            
+            for (let key in weights) {
+                const diff = Math.abs(features[key] - template[key]);
+                const score = Math.max(0, 1 - diff * 2); // More tolerant
+                similarity += score * weights[key];
+            }
+            
+            return similarity;
         }
 
         function cancelDrawing() {
@@ -626,16 +1067,22 @@
         }
 
         function startExercise() {
-            exerciseText = document.getElementById('textInput').value.toUpperCase().replace(/[^A-Z0-9\s]/g, '');
+            const input = document.getElementById('textInput').value.toUpperCase().replace(/[^A-Z0-9\s]/g, '');
+            if (!input.trim()) {
+                alert('Veuillez entrer un texte à écrire');
+                return;
+            }
+            exerciseText = input;
             currentIndex = 0;
             errorCount = 0;
+            window.exerciseStartTime = new Date();
             updateStatus();
-            createGrid('practiceGrid', 20, 27, true);
-            document.getElementById('statusText').textContent = 'Exercice en cours - Cliquez sur les cases dans l\'ordre';
+            createGrid('practiceGrid', GRID_ROWS, GRID_COLS, true);
+            document.getElementById('statusText').textContent = 'Exercice en cours - Remplissez toute la page';
         }
 
         function resetGrid() {
-            createGrid('practiceGrid', 20, 27, true);
+            createGrid('practiceGrid', GRID_ROWS, GRID_COLS, true);
             currentIndex = 0;
             errorCount = 0;
             currentCell = null;
@@ -645,9 +1092,8 @@
         function updateStatus() {
             document.getElementById('errorCount').textContent = `Erreurs: ${errorCount}`;
             if (exerciseText) {
-                const totalChars = exerciseText.replace(/ /g, '').length;
-                const progress = Math.min(100, Math.floor((currentIndex / totalChars) * 100));
-                document.getElementById('statusText').textContent = `Progression: ${progress}% (${currentIndex}/${totalChars})`;
+                const progress = Math.min(100, Math.floor((currentIndex / totalCells) * 100));
+                document.getElementById('statusText').textContent = `Progression: ${progress}% (${currentIndex}/${totalCells} cases)`;
             }
         }
 
@@ -664,8 +1110,7 @@
             createGrid('printGrid', rows, cols, false);
         }
 
-        // Initialize
-        createGrid('practiceGrid', 20, 27, true);
+        createGrid('practiceGrid', GRID_ROWS, GRID_COLS, true);
         generatePrintGrid();
     </script>
 </body>
