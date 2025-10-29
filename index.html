@@ -32,12 +32,28 @@
             color: white;
             padding: 3px 5px;
             font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .title-text {
             display: flex;
             align-items: center;
             gap: 5px;
+        }
+
+        .lang-button {
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #ffffff #000000 #000000 #ffffff;
+            padding: 2px 8px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+
+        .lang-button:active {
+            border-color: #000000 #ffffff #ffffff #000000;
         }
 
         .content {
@@ -317,6 +333,11 @@
             font-family: 'MS Sans Serif', Arial;
         }
 
+        input[type="text"]::placeholder {
+            color: #808080;
+            font-style: italic;
+        }
+
         @media print {
             body {
                 background: white;
@@ -344,8 +365,11 @@
         <div class="title-bar">
             <div class="title-text">
                 <span>📋</span>
-                <span>Squares - Exercice de Discipline</span>
+                <span id="appTitle">Squares - Exercice de Discipline</span>
             </div>
+            <button class="lang-button" onclick="toggleLanguage()">
+                <span id="langButton">🇬🇧 EN</span>
+            </button>
         </div>
 
         <div class="content">
@@ -406,7 +430,7 @@
 
                     <div class="controls">
                         <label>Texte à écrire: </label>
-                        <input type="text" id="textInput" value="JE SERAI PLUS ATTENTIF" style="width: 300px;">
+                        <input type="text" id="textInput" placeholder="JE SERAI PLUS ATTENTIF" value="" style="width: 300px;">
                         <button class="button" onclick="startExercise()">Commencer</button>
                         <button class="button" onclick="resetGrid()">Réinitialiser</button>
                     </div>
@@ -530,6 +554,298 @@
         let totalCells = 0;
         const GRID_ROWS = 20;
         const GRID_COLS = 27;
+        let currentLang = 'fr';
+
+        const translations = {
+            fr: {
+                appTitle: "Squares - Exercice de Discipline",
+                tabRules: "📖 Règles",
+                tabPractice: "✏️ Pratiquer",
+                tabPrint: "🖨️ Imprimer",
+                rulesTitle: "📋 Principe de l'exercice \"Squares\"",
+                rulesIntro: "Le \"Square\" est un exercice de concentration, patience et discipline consistant à remplir une feuille quadrillée avec une lettre ou un chiffre par case, sans jamais toucher les lignes.",
+                objective: "🎯 Objectif",
+                objectiveList: [
+                    "Développer la patience et la concentration",
+                    "Maintenir une écriture régulière et soignée",
+                    "Exercice de contrôle de soi et d'obéissance",
+                    "Peut être utilisé comme punition ou exercice de discipline"
+                ],
+                strictRules: "📏 Règles strictes",
+                rulesList: [
+                    "<strong>Support :</strong> Feuille A4 quadrillée (carrés < 8mm)",
+                    "<strong>Écriture :</strong> Lettres CAPITALES uniquement",
+                    "<strong>Placement :</strong> Une lettre/chiffre par case, centrée",
+                    "<strong>Interdiction absolue :</strong> Ne JAMAIS toucher les lignes",
+                    "<strong>Ligne centrale :</strong> Une ligne verticale colorée peut séparer la feuille en deux",
+                    "<strong>Tolérance :</strong> ZÉRO faute acceptée",
+                    "<strong>Remplissage :</strong> TOUTE la page doit être remplie (pas d'espaces)",
+                    "<strong>En cas d'erreur :</strong> Barrer et recommencer la page entière"
+                ],
+                duration: "⏱️ Durée estimée",
+                durationList: [
+                    "Environ 1 heure par feuille A4 complète",
+                    "Nécessite une attention soutenue sans relâchement"
+                ],
+                attention: "⚠️ Points d'attention",
+                attentionList: [
+                    "Vérifier chaque lettre avant de passer à la suivante",
+                    "Maintenir une taille et un style constants",
+                    "Rester calme et concentré du début à la fin",
+                    "Accepter de recommencer en cas d'erreur",
+                    "Le texte se répète jusqu'à remplir toute la page"
+                ],
+                practiceTitle: "✏️ Mode Pratique (Digital)",
+                practiceIntro: "Cliquez sur une case pour l'agrandir et dessinez votre lettre avec la souris ou le doigt. Vous devez remplir TOUTE la page. Le texte se répète automatiquement jusqu'à la fin.",
+                practiceInstructions: "<strong>Instructions:</strong> Cliquez sur la case jaune pour l'agrandir. Dessinez votre lettre capitale en restant dans les limites (bordure rouge). Validez ou effacez si besoin. Le texte se répète automatiquement jusqu'à ce que toute la page soit remplie.",
+                textLabel: "Texte à écrire:",
+                textPlaceholder: "JE SERAI PLUS ATTENTIF",
+                startButton: "Commencer",
+                resetButton: "Réinitialiser",
+                drawLetter: "Dessinez la lettre:",
+                eraseButton: "Effacer",
+                validateButton: "Valider",
+                cancelButton: "Annuler",
+                printTitle: "🖨️ Imprimer une feuille vierge",
+                printIntro: "Imprimez cette grille normalisée pour réaliser l'exercice à la main.",
+                printNote: "<strong>Note:</strong> La ligne rouge centrale est optionnelle. Vous pouvez la tracer au marqueur après impression.",
+                gridSize: "Taille de la grille (carrés de 7mm):",
+                small: "Petite (15x20)",
+                medium: "Moyenne (20x27)",
+                large: "Grande (25x35)",
+                generateButton: "Générer",
+                printButton: "Imprimer",
+                statusReady: "Prêt",
+                statusNoExercise: "Aucun exercice en cours",
+                statusInProgress: "Exercice en cours - Remplissez toute la page",
+                statusProgress: "Progression:",
+                errors: "Erreurs:",
+                cells: "cases",
+                errorBorder: "⚠️ ERREUR: Votre lettre touche les bords!\n\nVous devez recommencer la page entière.",
+                errorWrongLetter: "⚠️ ERREUR: Ce n'est pas la lettre",
+                errorMustRestart: "Vous devez recommencer la page entière.",
+                completionTitle: "✅ Exercice Terminé !",
+                congratulations: "Félicitations !",
+                completionMessage: "Vous avez complété l'exercice \"Squares\" avec succès !",
+                results: "Résultats :",
+                time: "Temps:",
+                cellsFilled: "Cases remplies:",
+                minutes: "minutes",
+                lessThanMinute: "Moins d'une minute",
+                downloadCert: "💾 Télécharger le certificat",
+                shareOn: "Partager sur les réseaux sociaux:",
+                closeButton: "Fermer",
+                fillOrder: "Vous devez remplir les cases dans l'ordre !",
+                startFirst: "Veuillez d'abord cliquer sur \"Commencer\"",
+                enterText: "Veuillez entrer un texte à écrire"
+            },
+            en: {
+                appTitle: "Squares - Discipline Exercise",
+                tabRules: "📖 Rules",
+                tabPractice: "✏️ Practice",
+                tabPrint: "🖨️ Print",
+                rulesTitle: "📋 \"Squares\" Exercise Principle",
+                rulesIntro: "The \"Square\" is a concentration, patience and discipline exercise consisting of filling a grid sheet with one letter or number per cell, without ever touching the lines.",
+                objective: "🎯 Objective",
+                objectiveList: [
+                    "Develop patience and concentration",
+                    "Maintain regular and neat handwriting",
+                    "Exercise in self-control and obedience",
+                    "Can be used as punishment or discipline exercise"
+                ],
+                strictRules: "📏 Strict Rules",
+                rulesList: [
+                    "<strong>Support:</strong> A4 grid sheet (squares < 8mm)",
+                    "<strong>Writing:</strong> CAPITAL letters only",
+                    "<strong>Placement:</strong> One letter/number per cell, centered",
+                    "<strong>Absolute prohibition:</strong> NEVER touch the lines",
+                    "<strong>Center line:</strong> A colored vertical line can separate the sheet in two",
+                    "<strong>Tolerance:</strong> ZERO mistakes accepted",
+                    "<strong>Filling:</strong> The ENTIRE page must be filled (no spaces)",
+                    "<strong>In case of error:</strong> Cross out and restart the entire page"
+                ],
+                duration: "⏱️ Estimated Duration",
+                durationList: [
+                    "About 1 hour per complete A4 sheet",
+                    "Requires sustained attention without relaxation"
+                ],
+                attention: "⚠️ Points of Attention",
+                attentionList: [
+                    "Check each letter before moving to the next",
+                    "Maintain constant size and style",
+                    "Stay calm and focused from start to finish",
+                    "Accept to restart in case of error",
+                    "The text repeats until the entire page is filled"
+                ],
+                practiceTitle: "✏️ Digital Practice Mode",
+                practiceIntro: "Click on a cell to enlarge it and draw your letter with the mouse or finger. You must fill the ENTIRE page. The text repeats automatically until the end.",
+                practiceInstructions: "<strong>Instructions:</strong> Click on the yellow cell to enlarge it. Draw your capital letter staying within the limits (red border). Validate or erase if needed. The text repeats automatically until the entire page is filled.",
+                textLabel: "Text to write:",
+                textPlaceholder: "I WILL BE MORE CAREFUL",
+                startButton: "Start",
+                resetButton: "Reset",
+                drawLetter: "Draw the letter:",
+                eraseButton: "Erase",
+                validateButton: "Validate",
+                cancelButton: "Cancel",
+                printTitle: "🖨️ Print a blank sheet",
+                printIntro: "Print this standardized grid to do the exercise by hand.",
+                printNote: "<strong>Note:</strong> The red center line is optional. You can draw it with a marker after printing.",
+                gridSize: "Grid size (7mm squares):",
+                small: "Small (15x20)",
+                medium: "Medium (20x27)",
+                large: "Large (25x35)",
+                generateButton: "Generate",
+                printButton: "Print",
+                statusReady: "Ready",
+                statusNoExercise: "No exercise in progress",
+                statusInProgress: "Exercise in progress - Fill the entire page",
+                statusProgress: "Progress:",
+                errors: "Errors:",
+                cells: "cells",
+                errorBorder: "⚠️ ERROR: Your letter touches the borders!\n\nYou must restart the entire page.",
+                errorWrongLetter: "⚠️ ERROR: This is not the letter",
+                errorMustRestart: "You must restart the entire page.",
+                completionTitle: "✅ Exercise Completed!",
+                congratulations: "Congratulations!",
+                completionMessage: "You have successfully completed the \"Squares\" exercise!",
+                results: "Results:",
+                time: "Time:",
+                cellsFilled: "Cells filled:",
+                minutes: "minutes",
+                lessThanMinute: "Less than a minute",
+                downloadCert: "💾 Download certificate",
+                shareOn: "Share on social media:",
+                closeButton: "Close",
+                fillOrder: "You must fill the cells in order!",
+                startFirst: "Please click \"Start\" first",
+                enterText: "Please enter a text to write"
+            }
+        };
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'fr' ? 'en' : 'fr';
+            updateLanguage();
+        }
+
+        function updateLanguage() {
+            const t = translations[currentLang];
+            
+            document.getElementById('appTitle').textContent = t.appTitle;
+            document.getElementById('langButton').textContent = currentLang === 'fr' ? '🇬🇧 EN' : '🇫🇷 FR';
+            
+            // Tabs
+            const tabs = document.querySelectorAll('.tab');
+            if (tabs[0]) tabs[0].innerHTML = t.tabRules;
+            if (tabs[1]) tabs[1].innerHTML = t.tabPractice;
+            if (tabs[2]) tabs[2].innerHTML = t.tabPrint;
+            
+            // Rules tab
+            const rulesContent = document.getElementById('rules');
+            if (rulesContent) {
+                const rulesH2 = rulesContent.querySelector('h2');
+                const rulesP = rulesContent.querySelector('p');
+                if (rulesH2) rulesH2.textContent = t.rulesTitle;
+                if (rulesP) rulesP.textContent = t.rulesIntro;
+                
+                const h3s = rulesContent.querySelectorAll('h3');
+                if (h3s[0]) h3s[0].textContent = t.objective;
+                if (h3s[1]) h3s[1].textContent = t.strictRules;
+                if (h3s[2]) h3s[2].textContent = t.duration;
+                if (h3s[3]) h3s[3].textContent = t.attention;
+                
+                const uls = rulesContent.querySelectorAll('ul');
+                if (uls[0]) uls[0].innerHTML = t.objectiveList.map(item => `<li>${item}</li>`).join('');
+                if (uls[1]) uls[1].innerHTML = t.rulesList.map(item => `<li>${item}</li>`).join('');
+                if (uls[2]) uls[2].innerHTML = t.durationList.map(item => `<li>${item}</li>`).join('');
+                if (uls[3]) uls[3].innerHTML = t.attentionList.map(item => `<li>${item}</li>`).join('');
+            }
+            
+            // Practice tab
+            const practiceContent = document.getElementById('practice');
+            if (practiceContent) {
+                const practiceH2 = practiceContent.querySelector('h2');
+                const practicePs = practiceContent.querySelectorAll('p');
+                const practiceLabels = practiceContent.querySelectorAll('label');
+                const practiceButtons = practiceContent.querySelectorAll('button');
+                const practiceDivs = practiceContent.querySelectorAll('div');
+                const practiceInput = practiceContent.querySelector('#textInput');
+                
+                if (practiceH2) practiceH2.textContent = t.practiceTitle;
+                if (practicePs[0]) practicePs[0].textContent = t.practiceIntro;
+                if (practiceLabels[0]) practiceLabels[0].textContent = t.textLabel + ' ';
+                if (practiceInput) practiceInput.placeholder = t.textPlaceholder;
+                if (practiceButtons[0]) practiceButtons[0].textContent = t.startButton;
+                if (practiceButtons[1]) practiceButtons[1].textContent = t.resetButton;
+                if (practiceDivs[2]) practiceDivs[2].innerHTML = t.practiceInstructions;
+            }
+            
+            // Drawing canvas
+            const drawingStrong = document.querySelector('#drawingCanvas strong');
+            if (drawingStrong) {
+                drawingStrong.innerHTML = t.drawLetter + ' <span id="expectedLetter"></span>';
+            }
+            const drawingButtons = document.querySelectorAll('#drawingCanvas .button');
+            if (drawingButtons[0]) drawingButtons[0].textContent = t.eraseButton;
+            if (drawingButtons[1]) drawingButtons[1].textContent = t.validateButton;
+            if (drawingButtons[2]) drawingButtons[2].textContent = t.cancelButton;
+            
+            // Print tab
+            const printContent = document.getElementById('print');
+            if (printContent) {
+                const printH2 = printContent.querySelector('h2');
+                const printPs = printContent.querySelectorAll('p');
+                const printLabels = printContent.querySelectorAll('label');
+                const printButtons = printContent.querySelectorAll('button');
+                const printDivs = printContent.querySelectorAll('div');
+                
+                if (printH2) printH2.textContent = t.printTitle;
+                if (printPs[0]) printPs[0].textContent = t.printIntro;
+                if (printLabels[0]) printLabels[0].textContent = t.gridSize + ' ';
+                
+                const selectOptions = printContent.querySelectorAll('option');
+                if (selectOptions[0]) selectOptions[0].textContent = t.small;
+                if (selectOptions[1]) selectOptions[1].textContent = t.medium;
+                if (selectOptions[2]) selectOptions[2].textContent = t.large;
+                
+                if (printButtons[0]) printButtons[0].textContent = t.generateButton;
+                if (printButtons[1]) printButtons[1].textContent = t.printButton;
+                if (printDivs[2]) printDivs[2].innerHTML = t.printNote;
+            }
+            
+            // Status bar
+            const statusSections = document.querySelectorAll('.status-section');
+            if (statusSections[0]) statusSections[0].textContent = t.statusReady;
+            const statusText = document.getElementById('statusText');
+            if (statusText && !exerciseText) {
+                statusText.textContent = t.statusNoExercise;
+            }
+            updateStatus();
+            
+            // Completion dialog elements
+            const dialogTitle = document.querySelector('.dialog-title');
+            if (dialogTitle) dialogTitle.textContent = t.completionTitle;
+            
+            const dialogH3 = document.querySelector('.completion-dialog h3');
+            if (dialogH3) dialogH3.textContent = t.congratulations;
+            
+            const dialogPs = document.querySelectorAll('.completion-dialog p');
+            if (dialogPs[0]) dialogPs[0].textContent = t.completionMessage;
+            
+            const dialogButtons = document.querySelectorAll('.completion-dialog .button');
+            if (dialogButtons[0]) dialogButtons[0].textContent = t.downloadCert;
+            
+            const shareStrongs = document.querySelectorAll('.completion-dialog strong');
+            if (shareStrongs[1]) shareStrongs[1].textContent = t.shareOn;
+            
+            // Find close button more reliably
+            const allDialogButtons = document.querySelectorAll('.completion-dialog .button');
+            allDialogButtons.forEach(btn => {
+                if (btn.getAttribute('onclick') === 'closeCompletionDialog()') {
+                    btn.textContent = t.closeButton;
+                }
+            });
+        }
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -776,6 +1092,7 @@
         }
 
         function showCompletionDialog() {
+            const t = translations[currentLang];
             const dialog = document.getElementById('completionDialog');
             dialog.classList.add('active');
             
@@ -784,8 +1101,17 @@
             const startTimeStored = window.exerciseStartTime || endTime;
             const duration = Math.floor((endTime - startTimeStored) / 60000);
             
-            document.getElementById('completionTime').textContent = duration > 0 ? `${duration} minutes` : 'Moins d\'une minute';
+            const timeText = duration > 0 ? `${duration} ${t.minutes}` : t.lessThanMinute;
+            document.getElementById('completionTime').textContent = timeText;
             document.getElementById('completionErrors').textContent = errorCount;
+            
+            // Update dialog text
+            document.querySelector('.dialog-title').textContent = t.completionTitle;
+            document.querySelector('.completion-dialog h3').textContent = t.congratulations;
+            document.querySelectorAll('.completion-dialog p')[0].textContent = t.completionMessage;
+            
+            const resultDiv = document.querySelector('.completion-dialog > div > div:nth-child(4)');
+            resultDiv.innerHTML = `<strong>${t.results}</strong><br>• ${t.time} <span id="completionTime">${timeText}</span><br>• ${t.errors} <span id="completionErrors">${errorCount}</span><br>• ${t.cellsFilled} 540`;
         }
 
         function closeCompletionDialog() {
@@ -1067,9 +1393,10 @@
         }
 
         function startExercise() {
+            const t = translations[currentLang];
             const input = document.getElementById('textInput').value.toUpperCase().replace(/[^A-Z0-9\s]/g, '');
             if (!input.trim()) {
-                alert('Veuillez entrer un texte à écrire');
+                alert(t.enterText);
                 return;
             }
             exerciseText = input;
@@ -1078,7 +1405,7 @@
             window.exerciseStartTime = new Date();
             updateStatus();
             createGrid('practiceGrid', GRID_ROWS, GRID_COLS, true);
-            document.getElementById('statusText').textContent = 'Exercice en cours - Remplissez toute la page';
+            document.getElementById('statusText').textContent = t.statusInProgress;
         }
 
         function resetGrid() {
@@ -1090,10 +1417,11 @@
         }
 
         function updateStatus() {
-            document.getElementById('errorCount').textContent = `Erreurs: ${errorCount}`;
+            const t = translations[currentLang];
+            document.getElementById('errorCount').textContent = `${t.errors} ${errorCount}`;
             if (exerciseText) {
                 const progress = Math.min(100, Math.floor((currentIndex / totalCells) * 100));
-                document.getElementById('statusText').textContent = `Progression: ${progress}% (${currentIndex}/${totalCells} cases)`;
+                document.getElementById('statusText').textContent = `${t.statusProgress} ${progress}% (${currentIndex}/${totalCells})`;
             }
         }
 
