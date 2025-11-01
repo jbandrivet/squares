@@ -114,11 +114,6 @@
             border-color: #000000 #ffffff #ffffff #000000;
         }
 
-        .button:disabled {
-            color: #808080;
-            cursor: default;
-        }
-
         h2 {
             font-size: 14px;
             margin-bottom: 10px;
@@ -164,11 +159,12 @@
             align-items: center;
             justify-content: center;
             font-family: 'Courier New', monospace;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
             cursor: pointer;
             user-select: none;
             transition: all 0.2s;
+            color: #000;
         }
 
         .cell.next {
@@ -177,6 +173,15 @@
 
         .cell.filled {
             background: #e0ffe0;
+            cursor: zoom-in;
+        }
+
+        .cell.center-line {
+            border-right: 2px solid #ff0000;
+        }
+
+        .cell.touching {
+            background: #ffeeee;
         }
 
         .drawing-canvas {
@@ -196,84 +201,6 @@
             display: block;
         }
 
-        .completion-dialog {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #c0c0c0;
-            border: 3px solid;
-            border-color: #ffffff #000000 #000000 #ffffff;
-            box-shadow: 0 0 30px rgba(0,0,0,0.7);
-            z-index: 2000;
-            padding: 20px;
-            min-width: 400px;
-            max-width: 90%;
-        }
-
-        .completion-dialog.active {
-            display: block;
-        }
-
-        .dialog-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1999;
-        }
-
-        .dialog-overlay.active {
-            display: block;
-        }
-
-        .dialog-title {
-            background: linear-gradient(to right, #000080, #1084d0);
-            color: white;
-            padding: 5px 10px;
-            margin: -20px -20px 15px -20px;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .dialog-content {
-            text-align: center;
-        }
-
-        .completion-icon {
-            font-size: 48px;
-            margin: 10px 0;
-        }
-
-        .share-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 15px;
-        }
-
-        .share-button {
-            background: #c0c0c0;
-            border: 2px solid;
-            border-color: #ffffff #000000 #000000 #ffffff;
-            padding: 8px 15px;
-            cursor: pointer;
-            font-family: 'MS Sans Serif', Arial;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .share-button:active {
-            border-color: #000000 #ffffff #ffffff #000000;
-        }
-
         .canvas-wrapper {
             background: white;
             border: 2px solid #000;
@@ -288,18 +215,6 @@
         .canvas-controls {
             margin-top: 10px;
             text-align: center;
-        }
-
-        .cell.center-line {
-            border-right: 2px solid #ff0000;
-        }
-
-        .cell.error {
-            background: #ffcccc;
-        }
-
-        .cell.touching {
-            background: #ffeeee;
         }
 
         .controls {
@@ -336,6 +251,51 @@
         input[type="text"]::placeholder {
             color: #808080;
             font-style: italic;
+        }
+
+        .zoom-viewer {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 4px solid #000080;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            z-index: 3000;
+            padding: 15px;
+        }
+
+        .zoom-viewer.active {
+            display: block;
+        }
+
+        .zoom-viewer-title {
+            background: #000080;
+            color: white;
+            padding: 5px 10px;
+            margin: -15px -15px 10px -15px;
+            font-weight: bold;
+        }
+
+        .zoom-viewer canvas {
+            border: 2px solid #000;
+            display: block;
+        }
+
+        .zoom-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2999;
+        }
+
+        .zoom-overlay.active {
+            display: block;
         }
 
         @media print {
@@ -440,7 +400,7 @@
                     </div>
 
                     <div style="margin-top: 10px; font-size: 11px;">
-                        <strong>Instructions:</strong> Cliquez sur la case jaune pour l'agrandir. Dessinez votre lettre capitale en restant dans les limites (bordure rouge). Validez ou effacez si besoin. Le texte se répète automatiquement jusqu'à ce que toute la page soit remplie.
+                        <strong>Instructions:</strong> Cliquez sur la case jaune pour l'agrandir. Dessinez votre lettre capitale en restant dans les limites (bordure rouge). Validez pour continuer. Cliquez sur une case verte pour zoomer et voir la lettre.
                     </div>
                 </div>
 
@@ -458,51 +418,12 @@
                     </div>
                 </div>
 
-                <div class="dialog-overlay" id="dialogOverlay"></div>
-                <div class="completion-dialog" id="completionDialog">
-                    <div class="dialog-title">✅ Exercice Terminé !</div>
-                    <div class="dialog-content">
-                        <div class="completion-icon">🏆</div>
-                        <h3 style="margin: 10px 0;">Félicitations !</h3>
-                        <p style="font-size: 12px; margin: 10px 0;">
-                            Vous avez complété l'exercice "Squares" avec succès !
-                        </p>
-                        <div style="background: #fff; border: 2px solid #000; padding: 10px; margin: 15px 0; text-align: left;">
-                            <strong>Résultats :</strong><br>
-                            • Temps: <span id="completionTime">-</span><br>
-                            • Erreurs: <span id="completionErrors">0</span><br>
-                            • Cases remplies: 540
-                        </div>
-                        
-                        <div style="margin: 15px 0;">
-                            <button class="button" onclick="downloadCertificate()" style="display: block; width: 90%; margin: 5px auto;">
-                                💾 Télécharger le certificat
-                            </button>
-                        </div>
-                        
-                        <div style="border-top: 2px solid #808080; padding-top: 15px; margin-top: 15px;">
-                            <strong style="font-size: 11px;">Partager sur les réseaux sociaux:</strong>
-                            <div class="share-buttons">
-                                <button class="share-button" onclick="shareCertificate('Twitter')">
-                                    🐦 Twitter
-                                </button>
-                                <button class="share-button" onclick="shareCertificate('Facebook')">
-                                    📘 Facebook
-                                </button>
-                                <button class="share-button" onclick="shareCertificate('Instagram')">
-                                    📷 Instagram
-                                </button>
-                                <button class="share-button" onclick="shareCertificate('WhatsApp')">
-                                    💬 WhatsApp
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 15px;">
-                            <button class="button" onclick="closeCompletionDialog()">
-                                Fermer
-                            </button>
-                        </div>
+                <div class="zoom-overlay" id="zoomOverlay" onclick="closeZoomViewer()"></div>
+                <div class="zoom-viewer" id="zoomViewer">
+                    <div class="zoom-viewer-title">🔍 Vue agrandie</div>
+                    <canvas id="zoomCanvas" width="400" height="400"></canvas>
+                    <div style="text-align: center; margin-top: 10px;">
+                        <button class="button" onclick="closeZoomViewer()">Fermer</button>
                     </div>
                 </div>
 
@@ -556,6 +477,14 @@
         const GRID_COLS = 27;
         let currentLang = 'fr';
 
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
         const translations = {
             fr: {
                 appTitle: "Squares - Exercice de Discipline",
@@ -565,14 +494,14 @@
                 rulesTitle: "📋 Principe de l'exercice \"Squares\"",
                 rulesIntro: "Le \"Square\" est un exercice de concentration, patience et discipline consistant à remplir une feuille quadrillée avec une lettre ou un chiffre par case, sans jamais toucher les lignes.",
                 objective: "🎯 Objectif",
-                objectiveList: [
+                objectiveItems: [
                     "Développer la patience et la concentration",
                     "Maintenir une écriture régulière et soignée",
                     "Exercice de contrôle de soi et d'obéissance",
                     "Peut être utilisé comme punition ou exercice de discipline"
                 ],
                 strictRules: "📏 Règles strictes",
-                rulesList: [
+                strictRulesItems: [
                     "<strong>Support :</strong> Feuille A4 quadrillée (carrés < 8mm)",
                     "<strong>Écriture :</strong> Lettres CAPITALES uniquement",
                     "<strong>Placement :</strong> Une lettre/chiffre par case, centrée",
@@ -583,12 +512,12 @@
                     "<strong>En cas d'erreur :</strong> Barrer et recommencer la page entière"
                 ],
                 duration: "⏱️ Durée estimée",
-                durationList: [
+                durationItems: [
                     "Environ 1 heure par feuille A4 complète",
                     "Nécessite une attention soutenue sans relâchement"
                 ],
                 attention: "⚠️ Points d'attention",
-                attentionList: [
+                attentionItems: [
                     "Vérifier chaque lettre avant de passer à la suivante",
                     "Maintenir une taille et un style constants",
                     "Rester calme et concentré du début à la fin",
@@ -597,7 +526,7 @@
                 ],
                 practiceTitle: "✏️ Mode Pratique (Digital)",
                 practiceIntro: "Cliquez sur une case pour l'agrandir et dessinez votre lettre avec la souris ou le doigt. Vous devez remplir TOUTE la page. Le texte se répète automatiquement jusqu'à la fin.",
-                practiceInstructions: "<strong>Instructions:</strong> Cliquez sur la case jaune pour l'agrandir. Dessinez votre lettre capitale en restant dans les limites (bordure rouge). Validez ou effacez si besoin. Le texte se répète automatiquement jusqu'à ce que toute la page soit remplie.",
+                practiceInstructions: "<strong>Instructions:</strong> Cliquez sur la case jaune pour l'agrandir. Dessinez votre lettre capitale en restant dans les limites (bordure rouge). Validez pour continuer. Cliquez sur une case verte pour zoomer et voir la lettre.",
                 textLabel: "Texte à écrire:",
                 textPlaceholder: "JE SERAI PLUS ATTENTIF",
                 startButton: "Commencer",
@@ -606,6 +535,8 @@
                 eraseButton: "Effacer",
                 validateButton: "Valider",
                 cancelButton: "Annuler",
+                zoomTitle: "🔍 Vue agrandie",
+                zoomCloseBtn: "Fermer",
                 printTitle: "🖨️ Imprimer une feuille vierge",
                 printIntro: "Imprimez cette grille normalisée pour réaliser l'exercice à la main.",
                 printNote: "<strong>Note:</strong> La ligne rouge centrale est optionnelle. Vous pouvez la tracer au marqueur après impression.",
@@ -621,20 +552,8 @@
                 statusProgress: "Progression:",
                 errors: "Erreurs:",
                 cells: "cases",
-                errorBorder: "⚠️ ERREUR: Votre lettre touche les bords!\n\nVous devez recommencer la page entière.",
-                errorWrongLetter: "⚠️ ERREUR: Ce n'est pas la lettre",
-                errorMustRestart: "Vous devez recommencer la page entière.",
-                completionTitle: "✅ Exercice Terminé !",
-                congratulations: "Félicitations !",
-                completionMessage: "Vous avez complété l'exercice \"Squares\" avec succès !",
-                results: "Résultats :",
-                time: "Temps:",
-                cellsFilled: "Cases remplies:",
-                minutes: "minutes",
-                lessThanMinute: "Moins d'une minute",
-                downloadCert: "💾 Télécharger le certificat",
-                shareOn: "Partager sur les réseaux sociaux:",
-                closeButton: "Fermer",
+                errorBorder: "⚠️ ERREUR: Votre lettre touche les bords rouges!\n\nVous devez recommencer la page entière.",
+                completionMessage: "✅ FIN\n\nFélicitations! Toute la page est remplie!",
                 fillOrder: "Vous devez remplir les cases dans l'ordre !",
                 startFirst: "Veuillez d'abord cliquer sur \"Commencer\"",
                 enterText: "Veuillez entrer un texte à écrire"
@@ -647,14 +566,14 @@
                 rulesTitle: "📋 \"Squares\" Exercise Principle",
                 rulesIntro: "The \"Square\" is a concentration, patience and discipline exercise consisting of filling a grid sheet with one letter or number per cell, without ever touching the lines.",
                 objective: "🎯 Objective",
-                objectiveList: [
+                objectiveItems: [
                     "Develop patience and concentration",
                     "Maintain regular and neat handwriting",
                     "Exercise in self-control and obedience",
                     "Can be used as punishment or discipline exercise"
                 ],
                 strictRules: "📏 Strict Rules",
-                rulesList: [
+                strictRulesItems: [
                     "<strong>Support:</strong> A4 grid sheet (squares < 8mm)",
                     "<strong>Writing:</strong> CAPITAL letters only",
                     "<strong>Placement:</strong> One letter/number per cell, centered",
@@ -665,12 +584,12 @@
                     "<strong>In case of error:</strong> Cross out and restart the entire page"
                 ],
                 duration: "⏱️ Estimated Duration",
-                durationList: [
+                durationItems: [
                     "About 1 hour per complete A4 sheet",
                     "Requires sustained attention without relaxation"
                 ],
                 attention: "⚠️ Points of Attention",
-                attentionList: [
+                attentionItems: [
                     "Check each letter before moving to the next",
                     "Maintain constant size and style",
                     "Stay calm and focused from start to finish",
@@ -679,7 +598,7 @@
                 ],
                 practiceTitle: "✏️ Digital Practice Mode",
                 practiceIntro: "Click on a cell to enlarge it and draw your letter with the mouse or finger. You must fill the ENTIRE page. The text repeats automatically until the end.",
-                practiceInstructions: "<strong>Instructions:</strong> Click on the yellow cell to enlarge it. Draw your capital letter staying within the limits (red border). Validate or erase if needed. The text repeats automatically until the entire page is filled.",
+                practiceInstructions: "<strong>Instructions:</strong> Click on the yellow cell to enlarge it. Draw your capital letter staying within the limits (red border). Validate to continue. Click on a green cell to zoom and see the letter.",
                 textLabel: "Text to write:",
                 textPlaceholder: "I WILL BE MORE CAREFUL",
                 startButton: "Start",
@@ -688,6 +607,8 @@
                 eraseButton: "Erase",
                 validateButton: "Validate",
                 cancelButton: "Cancel",
+                zoomTitle: "🔍 Enlarged view",
+                zoomCloseBtn: "Close",
                 printTitle: "🖨️ Print a blank sheet",
                 printIntro: "Print this standardized grid to do the exercise by hand.",
                 printNote: "<strong>Note:</strong> The red center line is optional. You can draw it with a marker after printing.",
@@ -703,20 +624,8 @@
                 statusProgress: "Progress:",
                 errors: "Errors:",
                 cells: "cells",
-                errorBorder: "⚠️ ERROR: Your letter touches the borders!\n\nYou must restart the entire page.",
-                errorWrongLetter: "⚠️ ERROR: This is not the letter",
-                errorMustRestart: "You must restart the entire page.",
-                completionTitle: "✅ Exercise Completed!",
-                congratulations: "Congratulations!",
-                completionMessage: "You have successfully completed the \"Squares\" exercise!",
-                results: "Results:",
-                time: "Time:",
-                cellsFilled: "Cells filled:",
-                minutes: "minutes",
-                lessThanMinute: "Less than a minute",
-                downloadCert: "💾 Download certificate",
-                shareOn: "Share on social media:",
-                closeButton: "Close",
+                errorBorder: "⚠️ ERROR: Your letter touches the red borders!\n\nYou must restart the entire page.",
+                completionMessage: "✅ END\n\nCongratulations! The entire page is filled!",
                 fillOrder: "You must fill the cells in order!",
                 startFirst: "Please click \"Start\" first",
                 enterText: "Please enter a text to write"
@@ -731,128 +640,70 @@
         function updateLanguage() {
             const t = translations[currentLang];
             
-            document.getElementById('appTitle').textContent = t.appTitle;
             document.getElementById('langButton').textContent = currentLang === 'fr' ? '🇬🇧 EN' : '🇫🇷 FR';
+            document.getElementById('appTitle').textContent = t.appTitle;
             
-            // Tabs
+            // Update tabs
             const tabs = document.querySelectorAll('.tab');
-            if (tabs[0]) tabs[0].innerHTML = t.tabRules;
-            if (tabs[1]) tabs[1].innerHTML = t.tabPractice;
-            if (tabs[2]) tabs[2].innerHTML = t.tabPrint;
+            tabs[0].innerHTML = t.tabRules;
+            tabs[1].innerHTML = t.tabPractice;
+            tabs[2].innerHTML = t.tabPrint;
             
-            // Rules tab
-            const rulesContent = document.getElementById('rules');
-            if (rulesContent) {
-                const rulesH2 = rulesContent.querySelector('h2');
-                const rulesP = rulesContent.querySelector('p');
-                if (rulesH2) rulesH2.textContent = t.rulesTitle;
-                if (rulesP) rulesP.textContent = t.rulesIntro;
-                
-                const h3s = rulesContent.querySelectorAll('h3');
-                if (h3s[0]) h3s[0].textContent = t.objective;
-                if (h3s[1]) h3s[1].textContent = t.strictRules;
-                if (h3s[2]) h3s[2].textContent = t.duration;
-                if (h3s[3]) h3s[3].textContent = t.attention;
-                
-                const uls = rulesContent.querySelectorAll('ul');
-                if (uls[0]) uls[0].innerHTML = t.objectiveList.map(item => `<li>${item}</li>`).join('');
-                if (uls[1]) uls[1].innerHTML = t.rulesList.map(item => `<li>${item}</li>`).join('');
-                if (uls[2]) uls[2].innerHTML = t.durationList.map(item => `<li>${item}</li>`).join('');
-                if (uls[3]) uls[3].innerHTML = t.attentionList.map(item => `<li>${item}</li>`).join('');
-            }
+            // Update Rules tab
+            const rulesTab = document.getElementById('rules');
+            rulesTab.querySelector('h2').textContent = t.rulesTitle;
+            rulesTab.querySelector('p').textContent = t.rulesIntro;
             
-            // Practice tab
-            const practiceContent = document.getElementById('practice');
-            if (practiceContent) {
-                const practiceH2 = practiceContent.querySelector('h2');
-                const practicePs = practiceContent.querySelectorAll('p');
-                const practiceLabels = practiceContent.querySelectorAll('label');
-                const practiceButtons = practiceContent.querySelectorAll('button');
-                const practiceDivs = practiceContent.querySelectorAll('div');
-                const practiceInput = practiceContent.querySelector('#textInput');
-                
-                if (practiceH2) practiceH2.textContent = t.practiceTitle;
-                if (practicePs[0]) practicePs[0].textContent = t.practiceIntro;
-                if (practiceLabels[0]) practiceLabels[0].textContent = t.textLabel + ' ';
-                if (practiceInput) practiceInput.placeholder = t.textPlaceholder;
-                if (practiceButtons[0]) practiceButtons[0].textContent = t.startButton;
-                if (practiceButtons[1]) practiceButtons[1].textContent = t.resetButton;
-                if (practiceDivs[2]) practiceDivs[2].innerHTML = t.practiceInstructions;
-            }
+            const h3s = rulesTab.querySelectorAll('h3');
+            h3s[0].textContent = t.objective;
+            h3s[1].textContent = t.strictRules;
+            h3s[2].textContent = t.duration;
+            h3s[3].textContent = t.attention;
             
-            // Drawing canvas
-            const drawingStrong = document.querySelector('#drawingCanvas strong');
-            if (drawingStrong) {
-                drawingStrong.innerHTML = t.drawLetter + ' <span id="expectedLetter"></span>';
-            }
-            const drawingButtons = document.querySelectorAll('#drawingCanvas .button');
-            if (drawingButtons[0]) drawingButtons[0].textContent = t.eraseButton;
-            if (drawingButtons[1]) drawingButtons[1].textContent = t.validateButton;
-            if (drawingButtons[2]) drawingButtons[2].textContent = t.cancelButton;
+            const uls = rulesTab.querySelectorAll('ul');
+            uls[0].innerHTML = t.objectiveItems.map(item => `<li>${item}</li>`).join('');
+            uls[1].innerHTML = t.strictRulesItems.map(item => `<li>${item}</li>`).join('');
+            uls[2].innerHTML = t.durationItems.map(item => `<li>${item}</li>`).join('');
+            uls[3].innerHTML = t.attentionItems.map(item => `<li>${item}</li>`).join('');
             
-            // Print tab
-            const printContent = document.getElementById('print');
-            if (printContent) {
-                const printH2 = printContent.querySelector('h2');
-                const printPs = printContent.querySelectorAll('p');
-                const printLabels = printContent.querySelectorAll('label');
-                const printButtons = printContent.querySelectorAll('button');
-                const printDivs = printContent.querySelectorAll('div');
-                
-                if (printH2) printH2.textContent = t.printTitle;
-                if (printPs[0]) printPs[0].textContent = t.printIntro;
-                if (printLabels[0]) printLabels[0].textContent = t.gridSize + ' ';
-                
-                const selectOptions = printContent.querySelectorAll('option');
-                if (selectOptions[0]) selectOptions[0].textContent = t.small;
-                if (selectOptions[1]) selectOptions[1].textContent = t.medium;
-                if (selectOptions[2]) selectOptions[2].textContent = t.large;
-                
-                if (printButtons[0]) printButtons[0].textContent = t.generateButton;
-                if (printButtons[1]) printButtons[1].textContent = t.printButton;
-                if (printDivs[2]) printDivs[2].innerHTML = t.printNote;
-            }
+            // Update Practice tab
+            const practiceTab = document.getElementById('practice');
+            practiceTab.querySelector('h2').textContent = t.practiceTitle;
+            practiceTab.querySelectorAll('p')[0].textContent = t.practiceIntro;
+            practiceTab.querySelector('label').textContent = t.textLabel + ' ';
+            practiceTab.querySelector('#textInput').placeholder = t.textPlaceholder;
+            practiceTab.querySelectorAll('.button')[0].textContent = t.startButton;
+            practiceTab.querySelectorAll('.button')[1].textContent = t.resetButton;
+            practiceTab.querySelectorAll('div')[practiceTab.querySelectorAll('div').length - 1].innerHTML = t.practiceInstructions;
             
-            // Status bar
-            const statusSections = document.querySelectorAll('.status-section');
-            if (statusSections[0]) statusSections[0].textContent = t.statusReady;
-            const statusText = document.getElementById('statusText');
-            if (statusText && !exerciseText) {
-                statusText.textContent = t.statusNoExercise;
+            // Update Drawing canvas
+            document.querySelector('#drawingCanvas strong').innerHTML = t.drawLetter + ' <span id="expectedLetter"></span>';
+            document.querySelectorAll('#drawingCanvas .button')[0].textContent = t.eraseButton;
+            document.querySelectorAll('#drawingCanvas .button')[1].textContent = t.validateButton;
+            document.querySelectorAll('#drawingCanvas .button')[2].textContent = t.cancelButton;
+            
+            // Update Zoom viewer
+            document.querySelector('.zoom-viewer-title').textContent = t.zoomTitle;
+            document.querySelector('#zoomViewer .button').textContent = t.zoomCloseBtn;
+            
+            // Update Print tab
+            const printTab = document.getElementById('print');
+            printTab.querySelector('h2').textContent = t.printTitle;
+            printTab.querySelectorAll('p')[0].textContent = t.printIntro;
+            printTab.querySelector('label').textContent = t.gridSize + ' ';
+            printTab.querySelectorAll('option')[0].textContent = t.small;
+            printTab.querySelectorAll('option')[1].textContent = t.medium;
+            printTab.querySelectorAll('option')[2].textContent = t.large;
+            printTab.querySelectorAll('.button')[0].textContent = t.generateButton;
+            printTab.querySelectorAll('.button')[1].textContent = t.printButton;
+            printTab.querySelectorAll('div')[printTab.querySelectorAll('div').length - 1].innerHTML = t.printNote;
+            
+            // Update status bar
+            document.querySelectorAll('.status-section')[0].textContent = t.statusReady;
+            if (!exerciseText) {
+                document.getElementById('statusText').textContent = t.statusNoExercise;
             }
             updateStatus();
-            
-            // Completion dialog elements
-            const dialogTitle = document.querySelector('.dialog-title');
-            if (dialogTitle) dialogTitle.textContent = t.completionTitle;
-            
-            const dialogH3 = document.querySelector('.completion-dialog h3');
-            if (dialogH3) dialogH3.textContent = t.congratulations;
-            
-            const dialogPs = document.querySelectorAll('.completion-dialog p');
-            if (dialogPs[0]) dialogPs[0].textContent = t.completionMessage;
-            
-            const dialogButtons = document.querySelectorAll('.completion-dialog .button');
-            if (dialogButtons[0]) dialogButtons[0].textContent = t.downloadCert;
-            
-            const shareStrongs = document.querySelectorAll('.completion-dialog strong');
-            if (shareStrongs[1]) shareStrongs[1].textContent = t.shareOn;
-            
-            // Find close button more reliably
-            const allDialogButtons = document.querySelectorAll('.completion-dialog .button');
-            allDialogButtons.forEach(btn => {
-                if (btn.getAttribute('onclick') === 'closeCompletionDialog()') {
-                    btn.textContent = t.closeButton;
-                }
-            });
-        }
-
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
-            event.target.classList.add('active');
-            document.getElementById(tabName).classList.add('active');
         }
 
         function createGrid(containerId, rows, cols, interactive = false) {
@@ -876,7 +727,13 @@
                     if (i === 0) {
                         cell.classList.add('next');
                     }
-                    cell.addEventListener('click', () => openDrawingCanvas(cell, i));
+                    cell.addEventListener('click', () => {
+                        if (cell.classList.contains('filled')) {
+                            showZoomViewer(cell);
+                        } else {
+                            openDrawingCanvas(cell, i);
+                        }
+                    });
                 }
                 
                 container.appendChild(cell);
@@ -884,19 +741,19 @@
         }
 
         function openDrawingCanvas(cell, index) {
+            const t = translations[currentLang];
             if (!exerciseText) {
-                alert('Veuillez d\'abord cliquer sur "Commencer"');
+                alert(t.startFirst);
                 return;
             }
             
             if (index !== currentIndex) {
-                alert('Vous devez remplir les cases dans l\'ordre !');
+                alert(t.fillOrder);
                 return;
             }
             
             currentCell = cell;
             
-            // Remove spaces from text for continuous filling
             const cleanText = exerciseText.replace(/\s+/g, '');
             const charIndex = currentIndex % cleanText.length;
             const expectedChar = cleanText[charIndex];
@@ -956,6 +813,8 @@
         function handleTouch(e) {
             e.preventDefault();
             const touch = e.touches[0];
+            if (!touch) return;
+            
             const rect = canvas.getBoundingClientRect();
             const x = touch.clientX - rect.left;
             const y = touch.clientY - rect.top;
@@ -1002,25 +861,40 @@
             const data = imageData.data;
             const margin = 20;
             
-            for (let x = margin; x < canvas.width - margin; x++) {
-                for (let y = margin - 5; y < margin + 5; y++) {
-                    const index = (y * canvas.width + x) * 4;
-                    if (data[index] < 200) return true;
-                }
-                for (let y = canvas.height - margin - 5; y < canvas.height - margin + 5; y++) {
-                    const index = (y * canvas.width + x) * 4;
-                    if (data[index] < 200) return true;
+            // Check only near the red border (±1 pixel)
+            for (let x = margin - 1; x <= canvas.width - margin + 1; x++) {
+                for (let y = margin - 1; y <= margin + 1; y++) {
+                    if (x >= 0 && x < canvas.width && y >= 0 && y < canvas.height) {
+                        const index = (y * canvas.width + x) * 4;
+                        if (data[index] < 180) return true;
+                    }
                 }
             }
             
-            for (let y = margin; y < canvas.height - margin; y++) {
-                for (let x = margin - 5; x < margin + 5; x++) {
-                    const index = (y * canvas.width + x) * 4;
-                    if (data[index] < 200) return true;
+            for (let x = margin - 1; x <= canvas.width - margin + 1; x++) {
+                for (let y = canvas.height - margin - 1; y <= canvas.height - margin + 1; y++) {
+                    if (x >= 0 && x < canvas.width && y >= 0 && y < canvas.height) {
+                        const index = (y * canvas.width + x) * 4;
+                        if (data[index] < 180) return true;
+                    }
                 }
-                for (let x = canvas.width - margin - 5; x < canvas.width - margin + 5; x++) {
-                    const index = (y * canvas.width + x) * 4;
-                    if (data[index] < 200) return true;
+            }
+            
+            for (let y = margin - 1; y <= canvas.height - margin + 1; y++) {
+                for (let x = margin - 1; x <= margin + 1; x++) {
+                    if (x >= 0 && x < canvas.width && y >= 0 && y < canvas.height) {
+                        const index = (y * canvas.width + x) * 4;
+                        if (data[index] < 180) return true;
+                    }
+                }
+            }
+            
+            for (let y = margin - 1; y <= canvas.height - margin + 1; y++) {
+                for (let x = canvas.width - margin - 1; x <= canvas.width - margin + 1; x++) {
+                    if (x >= 0 && x < canvas.width && y >= 0 && y < canvas.height) {
+                        const index = (y * canvas.width + x) * 4;
+                        if (data[index] < 180) return true;
+                    }
                 }
             }
             
@@ -1028,12 +902,14 @@
         }
 
         function validateDrawing() {
+            const t = translations[currentLang];
+            // ONLY check if touches red border - NO OTHER CHECKS
             const touching = checkBorderTouch();
             
             if (touching) {
                 currentCell.classList.add('touching');
                 errorCount++;
-                alert('⚠️ ERREUR: Votre lettre touche les bords!\n\nVous devez recommencer la page entière.');
+                alert(t.errorBorder);
                 setTimeout(() => {
                     resetGrid();
                     cancelDrawing();
@@ -1041,24 +917,7 @@
                 return;
             }
             
-            // Character recognition
-            const cleanText = exerciseText.replace(/\s+/g, '');
-            const charIndex = currentIndex % cleanText.length;
-            const expectedChar = cleanText[charIndex];
-            
-            const isCorrectChar = recognizeCharacter(expectedChar);
-            
-            if (!isCorrectChar) {
-                currentCell.classList.add('error');
-                errorCount++;
-                alert(`⚠️ ERREUR: Ce n'est pas la lettre "${expectedChar}"!\n\nVous devez recommencer la page entière.`);
-                setTimeout(() => {
-                    resetGrid();
-                    cancelDrawing();
-                }, 500);
-                return;
-            }
-            
+            // Save drawing
             const miniCanvas = document.createElement('canvas');
             miniCanvas.width = 25;
             miniCanvas.height = 25;
@@ -1070,12 +929,12 @@
             currentCell.style.backgroundPosition = 'center';
             currentCell.style.backgroundRepeat = 'no-repeat';
             currentCell.textContent = '';
+            currentCell.dataset.drawing = canvas.toDataURL();
             currentCell.classList.remove('next');
             currentCell.classList.add('filled');
             
             currentIndex++;
             
-            // Highlight next cell
             if (currentIndex < totalCells) {
                 const nextCell = document.querySelector(`[data-index="${currentIndex}"]`);
                 if (nextCell) {
@@ -1087,305 +946,8 @@
             cancelDrawing();
             
             if (currentIndex >= totalCells) {
-                showCompletionDialog();
+                alert(t.completionMessage);
             }
-        }
-
-        function showCompletionDialog() {
-            const t = translations[currentLang];
-            const dialog = document.getElementById('completionDialog');
-            dialog.classList.add('active');
-            
-            // Update completion info
-            const endTime = new Date();
-            const startTimeStored = window.exerciseStartTime || endTime;
-            const duration = Math.floor((endTime - startTimeStored) / 60000);
-            
-            const timeText = duration > 0 ? `${duration} ${t.minutes}` : t.lessThanMinute;
-            document.getElementById('completionTime').textContent = timeText;
-            document.getElementById('completionErrors').textContent = errorCount;
-            
-            // Update dialog text
-            document.querySelector('.dialog-title').textContent = t.completionTitle;
-            document.querySelector('.completion-dialog h3').textContent = t.congratulations;
-            document.querySelectorAll('.completion-dialog p')[0].textContent = t.completionMessage;
-            
-            const resultDiv = document.querySelector('.completion-dialog > div > div:nth-child(4)');
-            resultDiv.innerHTML = `<strong>${t.results}</strong><br>• ${t.time} <span id="completionTime">${timeText}</span><br>• ${t.errors} <span id="completionErrors">${errorCount}</span><br>• ${t.cellsFilled} 540`;
-        }
-
-        function closeCompletionDialog() {
-            document.getElementById('completionDialog').classList.remove('active');
-        }
-
-        function generateCertificate() {
-            const certCanvas = document.createElement('canvas');
-            certCanvas.width = 800;
-            certCanvas.height = 600;
-            const certCtx = certCanvas.getContext('2d');
-            
-            // Background
-            certCtx.fillStyle = '#f5f5dc';
-            certCtx.fillRect(0, 0, 800, 600);
-            
-            // Border
-            certCtx.strokeStyle = '#8b4513';
-            certCtx.lineWidth = 8;
-            certCtx.strokeRect(20, 20, 760, 560);
-            
-            certCtx.strokeStyle = '#d2691e';
-            certCtx.lineWidth = 2;
-            certCtx.strokeRect(30, 30, 740, 540);
-            
-            // Title
-            certCtx.fillStyle = '#000080';
-            certCtx.font = 'bold 48px serif';
-            certCtx.textAlign = 'center';
-            certCtx.fillText('CERTIFICAT D\'ACCOMPLISSEMENT', 400, 100);
-            
-            // Subtitle
-            certCtx.font = 'italic 24px serif';
-            certCtx.fillStyle = '#333';
-            certCtx.fillText('Exercice de Discipline "Squares"', 400, 150);
-            
-            // Main text
-            certCtx.font = '20px serif';
-            certCtx.fillStyle = '#000';
-            certCtx.fillText('Certifie que l\'exercice a été complété', 400, 220);
-            certCtx.fillText('avec succès le ' + new Date().toLocaleDateString('fr-FR'), 400, 260);
-            
-            // Stats box
-            certCtx.fillStyle = '#fff';
-            certCtx.fillRect(200, 300, 400, 120);
-            certCtx.strokeStyle = '#000080';
-            certCtx.lineWidth = 2;
-            certCtx.strokeRect(200, 300, 400, 120);
-            
-            certCtx.fillStyle = '#000';
-            certCtx.font = 'bold 18px sans-serif';
-            certCtx.textAlign = 'left';
-            certCtx.fillText('Statistiques:', 220, 330);
-            
-            certCtx.font = '16px sans-serif';
-            const endTime = new Date();
-            const startTimeStored = window.exerciseStartTime || endTime;
-            const duration = Math.floor((endTime - startTimeStored) / 60000);
-            
-            certCtx.fillText(`• Temps: ${duration > 0 ? duration + ' minutes' : 'Moins d\'une minute'}`, 220, 360);
-            certCtx.fillText(`• Erreurs: ${errorCount}`, 220, 385);
-            certCtx.fillText(`• Cases remplies: ${totalCells}`, 220, 410);
-            
-            // Mini grid preview (with watermark)
-            const scale = 0.8;
-            const gridPreviewX = 250;
-            const gridPreviewY = 440;
-            
-            certCtx.save();
-            certCtx.translate(gridPreviewX, gridPreviewY);
-            certCtx.scale(scale, scale);
-            
-            const practiceGrid = document.getElementById('practiceGrid');
-            const cells = practiceGrid.querySelectorAll('.cell');
-            const cellSize = 3;
-            const cols = GRID_COLS;
-            
-            cells.forEach((cell, index) => {
-                const x = (index % cols) * cellSize;
-                const y = Math.floor(index / cols) * cellSize;
-                
-                if (cell.style.backgroundImage) {
-                    certCtx.fillStyle = '#ccc';
-                    certCtx.fillRect(x, y, cellSize - 0.5, cellSize - 0.5);
-                }
-            });
-            
-            certCtx.restore();
-            
-            // Watermark - diagonal
-            certCtx.save();
-            certCtx.translate(400, 300);
-            certCtx.rotate(-Math.PI / 6);
-            certCtx.font = 'bold 60px sans-serif';
-            certCtx.fillStyle = 'rgba(0, 0, 128, 0.08)';
-            certCtx.textAlign = 'center';
-            certCtx.fillText('SQUARES DISCIPLINE', 0, 0);
-            certCtx.fillText('NON REPRODUCTIBLE', 0, 70);
-            certCtx.restore();
-            
-            // Footer watermark
-            certCtx.font = '12px sans-serif';
-            certCtx.fillStyle = '#999';
-            certCtx.textAlign = 'center';
-            certCtx.fillText('© Squares Exercise - Document unique et non reproductible', 400, 570);
-            
-            // Timestamp watermark (small, bottom right)
-            certCtx.font = '10px monospace';
-            certCtx.fillStyle = '#ccc';
-            certCtx.textAlign = 'right';
-            const timestamp = Date.now().toString(36).toUpperCase();
-            certCtx.fillText(`ID: ${timestamp}`, 770, 590);
-            
-            return certCanvas;
-        }
-
-        function downloadCertificate() {
-            const canvas = generateCertificate();
-            const link = document.createElement('a');
-            link.download = `squares-certificate-${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        }
-
-        function shareCertificate(platform) {
-            const canvas = generateCertificate();
-            canvas.toBlob((blob) => {
-                const file = new File([blob], 'squares-certificate.png', { type: 'image/png' });
-                
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    navigator.share({
-                        title: 'J\'ai complété l\'exercice Squares!',
-                        text: `J'ai terminé l'exercice de discipline "Squares" avec ${errorCount} erreur(s) !`,
-                        files: [file]
-                    }).catch(err => console.log('Partage annulé', err));
-                } else {
-                    // Fallback: download
-                    downloadCertificate();
-                    alert('Partage non disponible sur ce navigateur.\nLe certificat a été téléchargé.\nVous pouvez le partager manuellement sur ' + platform + '.');
-                }
-            });
-        }
-
-        function recognizeCharacter(expectedChar) {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            
-            // Extract features from the drawing
-            const features = extractFeatures(data, canvas.width, canvas.height);
-            
-            // Character templates - basic pattern matching
-            const templates = getCharacterTemplates();
-            
-            if (!templates[expectedChar]) {
-                // If no template, accept (for special chars)
-                return true;
-            }
-            
-            // Compare with expected character template
-            const similarity = compareFeatures(features, templates[expectedChar]);
-            
-            // Threshold for acceptance (60% similarity)
-            return similarity > 0.6;
-        }
-
-        function extractFeatures(data, width, height) {
-            const margin = 20;
-            const centerX = width / 2;
-            const centerY = height / 2;
-            
-            let topHalf = 0, bottomHalf = 0, leftHalf = 0, rightHalf = 0;
-            let totalPixels = 0;
-            let topMostY = height, bottomMostY = 0, leftMostX = width, rightMostX = 0;
-            
-            // Analyze the drawing
-            for (let y = margin; y < height - margin; y++) {
-                for (let x = margin; x < width - margin; x++) {
-                    const index = (y * width + x) * 4;
-                    if (data[index] < 200) { // Dark pixel
-                        totalPixels++;
-                        
-                        if (y < centerY) topHalf++;
-                        else bottomHalf++;
-                        
-                        if (x < centerX) leftHalf++;
-                        else rightHalf++;
-                        
-                        if (y < topMostY) topMostY = y;
-                        if (y > bottomMostY) bottomMostY = y;
-                        if (x < leftMostX) leftMostX = x;
-                        if (x > rightMostX) rightMostX = x;
-                    }
-                }
-            }
-            
-            if (totalPixels === 0) return null;
-            
-            const heightRatio = (bottomMostY - topMostY) / (height - 2 * margin);
-            const widthRatio = (rightMostX - leftMostX) / (width - 2 * margin);
-            
-            return {
-                topHalf: topHalf / totalPixels,
-                bottomHalf: bottomHalf / totalPixels,
-                leftHalf: leftHalf / totalPixels,
-                rightHalf: rightHalf / totalPixels,
-                heightRatio,
-                widthRatio,
-                aspectRatio: widthRatio / heightRatio
-            };
-        }
-
-        function getCharacterTemplates() {
-            return {
-                'A': { topHalf: 0.3, bottomHalf: 0.7, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.6, aspectRatio: 0.75 },
-                'B': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.7, rightHalf: 0.3, heightRatio: 0.8, widthRatio: 0.5, aspectRatio: 0.63 },
-                'C': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.65, rightHalf: 0.35, heightRatio: 0.7, widthRatio: 0.6, aspectRatio: 0.86 },
-                'D': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.65, rightHalf: 0.35, heightRatio: 0.8, widthRatio: 0.6, aspectRatio: 0.75 },
-                'E': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.7, rightHalf: 0.3, heightRatio: 0.8, widthRatio: 0.5, aspectRatio: 0.63 },
-                'F': { topHalf: 0.6, bottomHalf: 0.4, leftHalf: 0.7, rightHalf: 0.3, heightRatio: 0.8, widthRatio: 0.5, aspectRatio: 0.63 },
-                'G': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.6, rightHalf: 0.4, heightRatio: 0.7, widthRatio: 0.6, aspectRatio: 0.86 },
-                'H': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.6, aspectRatio: 0.75 },
-                'I': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.2, aspectRatio: 0.25 },
-                'J': { topHalf: 0.4, bottomHalf: 0.6, leftHalf: 0.3, rightHalf: 0.7, heightRatio: 0.8, widthRatio: 0.5, aspectRatio: 0.63 },
-                'K': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.6, rightHalf: 0.4, heightRatio: 0.8, widthRatio: 0.6, aspectRatio: 0.75 },
-                'L': { topHalf: 0.4, bottomHalf: 0.6, leftHalf: 0.7, rightHalf: 0.3, heightRatio: 0.8, widthRatio: 0.5, aspectRatio: 0.63 },
-                'M': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.8, aspectRatio: 1.0 },
-                'N': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.7, aspectRatio: 0.88 },
-                'O': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.7, widthRatio: 0.65, aspectRatio: 0.93 },
-                'P': { topHalf: 0.6, bottomHalf: 0.4, leftHalf: 0.7, rightHalf: 0.3, heightRatio: 0.8, widthRatio: 0.5, aspectRatio: 0.63 },
-                'Q': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.65, aspectRatio: 0.87 },
-                'R': { topHalf: 0.55, bottomHalf: 0.45, leftHalf: 0.6, rightHalf: 0.4, heightRatio: 0.8, widthRatio: 0.6, aspectRatio: 0.75 },
-                'S': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.5, aspectRatio: 0.67 },
-                'T': { topHalf: 0.55, bottomHalf: 0.45, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.6, aspectRatio: 0.75 },
-                'U': { topHalf: 0.4, bottomHalf: 0.6, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.6, aspectRatio: 0.8 },
-                'V': { topHalf: 0.45, bottomHalf: 0.55, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.65, aspectRatio: 0.87 },
-                'W': { topHalf: 0.45, bottomHalf: 0.55, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.85, aspectRatio: 1.13 },
-                'X': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.7, aspectRatio: 0.88 },
-                'Y': { topHalf: 0.55, bottomHalf: 0.45, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.65, aspectRatio: 0.81 },
-                'Z': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.7, widthRatio: 0.6, aspectRatio: 0.86 },
-                '0': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.6, aspectRatio: 0.8 },
-                '1': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.4, rightHalf: 0.6, heightRatio: 0.8, widthRatio: 0.3, aspectRatio: 0.38 },
-                '2': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.55, aspectRatio: 0.73 },
-                '3': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.4, rightHalf: 0.6, heightRatio: 0.75, widthRatio: 0.5, aspectRatio: 0.67 },
-                '4': { topHalf: 0.55, bottomHalf: 0.45, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.6, aspectRatio: 0.75 },
-                '5': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.75, widthRatio: 0.5, aspectRatio: 0.67 },
-                '6': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.55, rightHalf: 0.45, heightRatio: 0.75, widthRatio: 0.55, aspectRatio: 0.73 },
-                '7': { topHalf: 0.6, bottomHalf: 0.4, leftHalf: 0.4, rightHalf: 0.6, heightRatio: 0.8, widthRatio: 0.55, aspectRatio: 0.69 },
-                '8': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, heightRatio: 0.8, widthRatio: 0.55, aspectRatio: 0.69 },
-                '9': { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.45, rightHalf: 0.55, heightRatio: 0.75, widthRatio: 0.55, aspectRatio: 0.73 }
-            };
-        }
-
-        function compareFeatures(features, template) {
-            if (!features) return 0;
-            
-            const weights = {
-                topHalf: 0.15,
-                bottomHalf: 0.15,
-                leftHalf: 0.15,
-                rightHalf: 0.15,
-                heightRatio: 0.15,
-                widthRatio: 0.15,
-                aspectRatio: 0.1
-            };
-            
-            let similarity = 0;
-            
-            for (let key in weights) {
-                const diff = Math.abs(features[key] - template[key]);
-                const score = Math.max(0, 1 - diff * 2); // More tolerant
-                similarity += score * weights[key];
-            }
-            
-            return similarity;
         }
 
         function cancelDrawing() {
@@ -1402,7 +964,6 @@
             exerciseText = input;
             currentIndex = 0;
             errorCount = 0;
-            window.exerciseStartTime = new Date();
             updateStatus();
             createGrid('practiceGrid', GRID_ROWS, GRID_COLS, true);
             document.getElementById('statusText').textContent = t.statusInProgress;
@@ -1421,8 +982,37 @@
             document.getElementById('errorCount').textContent = `${t.errors} ${errorCount}`;
             if (exerciseText) {
                 const progress = Math.min(100, Math.floor((currentIndex / totalCells) * 100));
-                document.getElementById('statusText').textContent = `${t.statusProgress} ${progress}% (${currentIndex}/${totalCells})`;
+                document.getElementById('statusText').textContent = `${t.statusProgress} ${progress}% (${currentIndex}/${totalCells} ${t.cells})`;
             }
+        }
+
+        function showZoomViewer(cell) {
+            const drawingData = cell.dataset.drawing;
+            if (!drawingData) return;
+            
+            const zoomCanvas = document.getElementById('zoomCanvas');
+            const zoomCtx = zoomCanvas.getContext('2d');
+            
+            const img = new Image();
+            img.onload = function() {
+                zoomCtx.fillStyle = 'white';
+                zoomCtx.fillRect(0, 0, zoomCanvas.width, zoomCanvas.height);
+                zoomCtx.drawImage(img, 0, 0, zoomCanvas.width, zoomCanvas.height);
+                
+                const margin = 27;
+                zoomCtx.strokeStyle = '#ff0000';
+                zoomCtx.lineWidth = 3;
+                zoomCtx.strokeRect(margin, margin, zoomCanvas.width - 2*margin, zoomCanvas.height - 2*margin);
+            };
+            img.src = drawingData;
+            
+            document.getElementById('zoomOverlay').classList.add('active');
+            document.getElementById('zoomViewer').classList.add('active');
+        }
+
+        function closeZoomViewer() {
+            document.getElementById('zoomOverlay').classList.remove('active');
+            document.getElementById('zoomViewer').classList.remove('active');
         }
 
         function generatePrintGrid() {
@@ -1438,6 +1028,7 @@
             createGrid('printGrid', rows, cols, false);
         }
 
+        // Initialize
         createGrid('practiceGrid', GRID_ROWS, GRID_COLS, true);
         generatePrintGrid();
     </script>
